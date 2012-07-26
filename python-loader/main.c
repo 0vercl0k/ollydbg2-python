@@ -160,7 +160,7 @@ LRESULT CALLBACK WindowProc_script_loading(HWND hwnd, UINT uMsg, WPARAM wParam, 
                 if(nb_character == 0)
                     break;
 
-                buffer = (wchar_t*)malloc(sizeof(wchar_t) * (nb_character + 1));
+                buffer = new (std::nothrow) wchar_t[nb_character + 1];
                 if(buffer != NULL)
                 {
                     GetDlgItemText(hwnd, WINDOW_EDITBOX_IDX, buffer, nb_character + 1);
@@ -168,7 +168,7 @@ LRESULT CALLBACK WindowProc_script_loading(HWND hwnd, UINT uMsg, WPARAM wParam, 
                     execute_python_script(buffer);
 
                     SendMessage(hwnd, WM_CLOSE, 0, 0);
-                    free(buffer);
+                    delete[] buffer;
                 }
                 else
                     Addtolist(0, RED, L"[python-loader] buffer allocation failed.");
