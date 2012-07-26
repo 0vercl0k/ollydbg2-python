@@ -1,20 +1,26 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#
+#    breakpoints_wrapper.py - You will find there all the wrapper of the OllyDBG2 API to play with breakpoints.
+#    Copyright (C) 2012 Axel "0vercl0k" Souchet - http://www.twitter.com/0vercl0k
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 from ctypes import *
+from common import *
 from breakpoints_constants import *
-
-kernel32 = windll.kernel32
-
-def resolve_api(n):
-    """
-    Retrieve dynamically the function address exported
-    by OllyDbg
-    """
-    addr = kernel32.GetProcAddress(
-        kernel32.GetModuleHandleA(0),
-        n
-    )
-    assert(addr != 0)
-    return addr
-
 
 # stdapi (int) Setint3breakpoint(ulong addr, ulong type, int fnindex, int limit, int count, wchar_t *condition, wchar_t *expression, wchar_t *exprtype);
 Setint3breakpoint_TYPE = WINFUNCTYPE(c_int, c_ulong, c_ulong, c_int, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
