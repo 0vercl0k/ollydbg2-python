@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-#    common.py - All those functions/stuff are used frequently, thus factorized in this file.
+#    threads.py - High level API to play with threads related stuff.
 #    Copyright (C) 2012 Axel "0vercl0k" Souchet - http://www.twitter.com/0vercl0k
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -18,21 +18,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from ctypes import *
+from threads_wrappers import *
 
-kernel32 = windll.kernel32
-
-# Max length of text string incl. '\0'
-TEXTLEN = 256
-
-def resolve_api(n):
+def GetCurrentThreadRegisters():
     """
-    Retrieve dynamically the function address exported
-    by OllyDbg
+    Retrieve the register for the current thread debugged
     """
-    addr = kernel32.GetProcAddress(
-        kernel32.GetModuleHandleA(0),
-        n
-    )
-    assert(addr != 0)
-    return addr
+    current_tid = GetCpuThreadId()
+    if current_tid == 0:
+        return None
+    return ThreadRegisters(current_tid)

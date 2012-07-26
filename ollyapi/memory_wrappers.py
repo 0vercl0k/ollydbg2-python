@@ -20,6 +20,7 @@
 #
 from ctypes import *
 from common import *
+from memory_constants import *
 
 # stdapi (ulong) Readmemory(void *buf,ulong addr,ulong size,int mode);
 Readmemory_TYPE = WINFUNCTYPE(c_ulong, c_void_p, c_ulong, c_ulong, c_int)
@@ -29,17 +30,37 @@ Readmemory = Readmemory_TYPE(resolve_api('Readmemory'))
 Writememory_TYPE = WINFUNCTYPE(c_ulong, c_void_p, c_ulong, c_ulong, c_int)
 Writememory = Writememory_TYPE(resolve_api('Writememory'))
 
+# stdapi (int) Expression(t_result *result, wchar_t *expression, uchar *data, ulong base, ulong size, ulong threadid, ulong a, ulong b, ulong mode);
+Expression_TYPE = WINFUNCTYPE(c_int, POINTER(t_result), c_wchar_p, c_void_p, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong)
+Expression_ = Expression_TYPE(resolve_api('Expression'))
+
+# stdapi (void) Flushmemorycache(void);
+Flushmemorycache_TYPE = WINFUNCTYPE(None)
+Flushmemorycache = Flushmemorycache_TYPE(resolve_api('Flushmemorycache'))
+
+def FlushMemoryCache():
+    """
+    Flush the intern memory cache of OllyDBG2
+    """
+    Flushmemorycache()
+
 def WriteMemory(addr, buff, size, mode = 0):
     """
     Write directly in the memory of the process
     """
     b = create_string_buffer(buff)
-    return Writememory(
+    n = Writememory(
         addressof(b),
         c_ulong(addr),
         c_ulong(size),
         c_int(mode)
     )
+
+    # flush the cache after writing ; not sure it's good/required to do that though.
+    FlushMemoryCache()
+
+    return n
+
 
 def ReadMemory(addr, size, mode = 0):
     """
@@ -53,3 +74,25 @@ def ReadMemory(addr, size, mode = 0):
         c_int(mode)
     )
     return buff.raw
+
+def Expression(result, expression, data, base, size, threadid, a, b, mode):
+    """
+    Let OllyDbg evaluate an expression for you:
+        * get an exported function address easily thanks to the notation module.function_name
+    """
+    r = Expression_(
+        byref(result),
+        c_wchar_p(expression),
+        c_void_p(data),
+        c_ulong(base),
+        c_ulong(size),
+        c_ulong(threadid),
+        c_ulong(a),
+        c_ulong(b),
+        c_ulong(mode)
+    )
+
+    if result.value == 'Unrecognized identifier':
+        return None
+
+    return r

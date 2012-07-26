@@ -19,3 +19,26 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from memory_wrappers import *
+from threads_wrappers import GetCpuThreadId
+
+def ResolveApiAddress(module, function):
+    """
+    Get the address of a specific API exported by a specific module thanks to their names
+    """
+    r = t_result()
+    ret = Expression(
+        r,
+        '%s.%s' % (module, function),
+        0,
+        0,
+        0,
+        GetCpuThreadId(),
+        0,
+        0,
+        0
+    )
+
+    if r.datatype == EXPR_DWORD:
+        return r.u.u
+
+    return None
