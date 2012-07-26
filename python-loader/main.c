@@ -100,7 +100,7 @@ pentry (int) ODBG2_Pluginquery(int ollydbgversion, wchar_t pluginname[SHORTNAME]
     pathW += L"\\hook.py";
 
     Addtolist(0x31337, WHITE, L"[python-loader] Preparing to hook stdout/stderr of the python environment (%s)..", pathW.c_str());
-    //XXX: conversion between std::string <-> std::wstring 
+
     std::string pathA(widechar_to_multibytes(pathW));
 
     PyObject* PyFileObject = PyFile_FromString((char*)pathA.c_str(), "r");
@@ -163,7 +163,7 @@ LRESULT CALLBACK WindowProc_script_loading(HWND hwnd, UINT uMsg, WPARAM wParam, 
                 buffer = (wchar_t*)malloc(sizeof(wchar_t) * (nb_character + 1));
                 if(buffer != NULL)
                 {
-                    GetDlgItemText(hwnd, WINDOW_EDITBOX_IDX, buffer, nb_character - 1);
+                    GetDlgItemText(hwnd, WINDOW_EDITBOX_IDX, buffer, nb_character + 1);
 
                     execute_python_script(buffer);
 
@@ -254,7 +254,7 @@ void spawn_window(void)
     hEditBox = CreateWindowEx(
         0,
         L"EDIT",
-        L"C:\\",
+        L"D:\\Codes\\OllyDBG2-Python\\script.py",
         WS_CHILD | WS_VISIBLE | WS_BORDER,
         5,
         5,
@@ -335,11 +335,19 @@ int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode)
 */
 void execute_python_script(wchar_t *path)
 {
-    Addtolist(0, WHITE, L"[python-loader] Trying to execute the script located here: %s..", path);
+    Addtolist(0, WHITE, L"[python-loader] Trying to execute the script located here: '%s'..", path);
 
-    // XXX: do the conversion unicode -> ascii, no hardcoding dude
-    PyObject* PyFileObject = PyFile_FromString("D:\\Codes\\OllyDBG2-Python\\script.py", "r");
-    PyRun_SimpleFile(PyFile_AsFile(PyFileObject), "D:\\Codes\\OllyDBG2-Python\\script.py");
+    std::wstring pathW(path);
+    std::string pathA(widechar_to_multibytes(pathW));
 
-    Addtolist(0, WHITE, L"[python-loader] Execution is done!", path);
+    PyObject* PyFileObject = PyFile_FromString((char*)pathA.c_str(), "r");
+    if(PyFileObject == NULL)
+    {
+        Addtolist(0, RED, L"[python-loader] Your file doesn't exist.");
+        return;
+    }
+
+    PyRun_SimpleFile(PyFile_AsFile(PyFileObject), (char*)pathA.c_str());
+
+    Addtolist(0, WHITE, L"[python-loader] Execution is done!");
 }
