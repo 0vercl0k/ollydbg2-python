@@ -127,62 +127,6 @@ extc _export t_menu* cdecl ODBG2_Pluginmenu(wchar_t* type)
     return NULL;
 }
 
-/*
-    The Window procedure used by the window we display in order
-    to know which python script the user wants to execute.
-*/
-LRESULT CALLBACK WindowProc_script_loading(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (uMsg) 
-    {
-        case WM_SIZE: 
-        // Set the size and position of the window. 
-        case WM_PAINT: 
-        // Paint the window's client area.
-        case WM_CREATE: 
-            return 0; 
- 
-        case WM_DESTROY: 
-            // Clean up window-specific data objects.
-            PostQuitMessage(0);
-            return 0; 
- 
-        // 
-        // Process other messages. 
-        // 
-        case WM_COMMAND:
-        {
-            if(LOWORD(wParam) == WINDOW_BUTTON_OK_IDX)
-            {
-                wchar_t *buffer = NULL;
-                int nb_character = GetWindowTextLength(GetDlgItem(hwnd, WINDOW_EDITBOX_IDX));
-
-                if(nb_character == 0)
-                    break;
-
-                buffer = new (std::nothrow) wchar_t[nb_character + 1];
-                if(buffer != NULL)
-                {
-                    GetDlgItemText(hwnd, WINDOW_EDITBOX_IDX, buffer, nb_character + 1);
-
-                    execute_python_script(buffer);
-
-                    SendMessage(hwnd, WM_CLOSE, 0, 0);
-                    delete[] buffer;
-                }
-                else
-                    Addtolist(0, RED, L"[python-loader] buffer allocation failed.");
-            }
-
-            break;
-        }
-
-        default: 
-            return DefWindowProc(hwnd, uMsg, wParam, lParam); 
-    }
-
-    return 0;
-}
 
 /*
     Spawn a nice (ok, not that nice) window to ask you the path of
@@ -190,103 +134,24 @@ LRESULT CALLBACK WindowProc_script_loading(HWND hwnd, UINT uMsg, WPARAM wParam, 
 */
 void spawn_window(void)
 {
-    WNDCLASSEX winClass = {0};
-    MSG msg = {0};
-    ATOM classId = 0;
-    HWND hWindow = 0, hEditBox = 0, hButtonOk = 0;
-            
-    winClass.cbSize = sizeof(WNDCLASSEX);
-    winClass.lpfnWndProc = WindowProc_script_loading;
-    winClass.hInstance = g_hinst;
-    winClass.lpszClassName = CLASS_NAME;
-    winClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
+    wchar_t file_path[1024] = {0};
+    OPENFILENAME ofn = {0};
 
-    /* Create a lil windows to launch your script */
-    classId = RegisterClassEx(&winClass);
-    if(classId == 0)
-    {
-        Addtolist(0, RED, L"[python-loader] RegisterClassEx failed: %d.", GetLastError());
-        goto end;
-    }
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwollymain;
+    ofn.lpstrFile = file_path;
+    // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+    // use the contents of szFile to initialize itself.
+    ofn.lpstrFile[0] = '\0';
+    ofn.nMaxFile = sizeof(file_path);
+    ofn.lpstrFilter = L"Python files\0*.py\0\0";
+    ofn.nFilterIndex = 1;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-    hWindow = CreateWindowEx(
-        0,
-        CLASS_NAME,
-        L"Which python script should we execute ?",
-        WS_BORDER | WS_SYSMENU,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        400,
-        100,
-        hwollymain,
-        NULL,
-        g_hinst,
-        NULL
-    );
-
-    if(hWindow == NULL)
-    {
-        Addtolist(0, RED, L"[python-loader] CreateWindowEx window failed: %d.", GetLastError());
-        goto end;
-    }
-
-    hButtonOk = CreateWindowEx(
-        0,
-        L"BUTTON",
-        L"Execute it!",
-        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        10,
-        50,
-        80,
-        20,
-        hWindow,
-        (HMENU)WINDOW_BUTTON_OK_IDX,
-        g_hinst,
-        NULL
-    );
-
-    if(hButtonOk == NULL)
-    {
-        Addtolist(0, RED, L"[python-loader] CreateWindowEx button failed: %d.", GetLastError());
-        goto end;
-    }
-
-    hEditBox = CreateWindowEx(
-        0,
-        L"EDIT",
-        L"D:\\Codes\\OllyDBG2-Python\\script.py",
-        WS_CHILD | WS_VISIBLE | WS_BORDER,
-        5,
-        5,
-        385,
-        40,
-        hWindow,
-        (HMENU)WINDOW_EDITBOX_IDX,
-        g_hinst,
-        NULL
-    );
-
-    if(hEditBox == NULL)
-    {
-        Addtolist(0, RED, L"[python-loader] CreateWindowEx editbox failed: %d.", GetLastError());
-        goto end;
-    }
-
-    ShowWindow(hWindow, SW_SHOW);
-    UpdateWindow(hWindow);  
-
-    while(GetMessage(&msg, NULL, 0, 0) > 0)
-    {
-        if(IsDialogMessage(hWindow, &msg) == 0)
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
-
-    end:
-    if(classId != 0)
-        UnregisterClass(CLASS_NAME, g_hinst);
+    if(GetOpenFileName(&ofn) == TRUE)
+        execute_python_script(file_path);
+    else
+        Addtolist(0, RED, L"[python-loader] Your path is really *long*, are you trying to crash me ?:)");
 }
 
 /*
