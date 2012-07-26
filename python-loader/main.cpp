@@ -1,76 +1,9 @@
-#include <stdio.h>
-#include <windows.h>
-#include <string>
-#include "plugin.h"
+#include "main.hpp"
+#include "toolbox.hpp"
 
-extern "C" {
-    #include <python.h>
-};
-
-// Constants
-#define CLASS_NAME L"script_loading window"
-
-#define MENU_LOAD_SCRIPT_IDX 1
-#define MENU_ABOUT_IDX 2
-
-#define WINDOW_BUTTON_OK_IDX 0x8801
-#define WINDOW_EDITBOX_IDX 0x8802
-
-// Prototypes
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved);
-LRESULT CALLBACK WindowProc_script_loading(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode);
-void spwan_window(void);
-void execute_python_script(wchar_t *path);
-std::wstring multibytes_to_widechar(std::string &st);
-std::string widechar_to_multibytes(std::wstring &st);
-
-// Global variables
-HINSTANCE g_hinst = 0;
-
-/*
-typedef struct t_menu                      // Menu descriptor
-{
-    wchar_t        *name;                  // Menu command
-    wchar_t        *help;                  // Explanation of command
-    int            shortcutid;             // Shortcut identifier, K_xxx
-    MENUFUNC       *menufunc;              // Function that executes menu command
-    struct t_menu  *submenu;               // Pointer to descriptor of popup menu
-    union {
-        ulong        index;                // Argument passed to menu function
-        HMENU        hsubmenu;             // Handle of pulldown menu
-    };
-} t_menu;
-*/
-t_menu g_MainMenu[] =
-{
-    {
-        L"Load your script", 
-        L"Load in OllyDBG your custom python script.",  
-        K_NONE, handle_menu, NULL, MENU_LOAD_SCRIPT_IDX
-    },
-    {
-        L"About", 
-        L"Fire the about messagebox.",  
-        K_NONE, handle_menu, NULL, MENU_ABOUT_IDX
-    },
-    { NULL, NULL, K_NONE, NULL, NULL, 0 }
-};
-
-std::string widechar_to_multibytes(std::wstring &st)
-{
-    // XXX: make sure st doesn't have any accent..
-    std::string ret;
-    ret.assign(st.begin(), st.end());
-    return ret;
-}
-
-std::wstring multibytes_to_widechar(std::string &st)
-{
-    std::wstring ret;
-    ret.assign(st.begin(), st.end());
-    return ret;
-}
+#include <cstdio>
+#include <cstring>
+#include <python.h>
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
@@ -127,11 +60,6 @@ extc _export t_menu* cdecl ODBG2_Pluginmenu(wchar_t* type)
     return NULL;
 }
 
-
-/*
-    Spawn a nice (ok, not that nice) window to ask you the path of
-    the python script you want to execute inside OllyDBG.
-*/
 void spawn_window(void)
 {
     wchar_t file_path[1024] = {0};
@@ -154,10 +82,6 @@ void spawn_window(void)
         Addtolist(0, RED, L"[python-loader] Your path is really *long*, are you trying to crash me ?:)");
 }
 
-/*
-    Method called by OllyDBG in order to dispatch the actions done on
-    the menu the plugin creates.
-*/
 int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode)
 {
     if(nMode == MENU_VERIFY)
@@ -194,10 +118,6 @@ int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode)
         return MENU_ABSENT;
 }
 
-/*
-    Execute a python script located on your file system thanks to
-    the python high level API.
-*/
 void execute_python_script(wchar_t *path)
 {
     Addtolist(0, WHITE, L"[python-loader] Trying to execute the script located here: '%s'..", path);

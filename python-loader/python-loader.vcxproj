@@ -83,10 +83,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.c" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="toolbox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\plugin.h" />
+    <ClInclude Include="main.hpp" />
+    <ClInclude Include="toolbox.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
