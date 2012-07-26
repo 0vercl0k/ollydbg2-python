@@ -22,6 +22,8 @@ LRESULT CALLBACK WindowProc_script_loading(HWND hwnd, UINT uMsg, WPARAM wParam, 
 int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode);
 void spwan_window(void);
 void execute_python_script(wchar_t *path);
+std::wstring multibytes_to_widechar(std::string &st);
+std::string widechar_to_multibytes(std::wstring &st);
 
 // Global variables
 HINSTANCE g_hinst = 0;
@@ -55,6 +57,21 @@ t_menu g_MainMenu[] =
     { NULL, NULL, K_NONE, NULL, NULL, 0 }
 };
 
+std::string widechar_to_multibytes(std::wstring &st)
+{
+    // XXX: make sure st doesn't have any accent..
+    std::string ret;
+    ret.assign(st.begin(), st.end());
+    return ret;
+}
+
+std::wstring multibytes_to_widechar(std::string &st)
+{
+    std::wstring ret;
+    ret.assign(st.begin(), st.end());
+    return ret;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
     if(fdwReason == DLL_PROCESS_ATTACH)
@@ -79,13 +96,15 @@ pentry (int) ODBG2_Pluginquery(int ollydbgversion, wchar_t pluginname[SHORTNAME]
     // Initialize the python environment, prepare the hooks
     Py_Initialize();
 
-    std::wstring path(ollydir);
-    path += L"\\hook.py";
+    std::wstring pathW(ollydir);
+    pathW += L"\\hook.py";
 
-    Addtolist(0x31337, WHITE, L"[python-loader] Preparing to hook stdout/stderr of the python environment (%s)..", path.c_str());
+    Addtolist(0x31337, WHITE, L"[python-loader] Preparing to hook stdout/stderr of the python environment (%s)..", pathW.c_str());
     //XXX: conversion between std::string <-> std::wstring 
-    PyObject* PyFileObject = PyFile_FromString("D:\\Codes\\OllyDBG2-Python\\hook.py", "r");
-    PyRun_SimpleFile(PyFile_AsFile(PyFileObject), "D:\\Codes\\OllyDBG2-Python\\hook.py");
+    std::string pathA(widechar_to_multibytes(pathW));
+
+    PyObject* PyFileObject = PyFile_FromString((char*)pathA.c_str(), "r");
+    PyRun_SimpleFile(PyFile_AsFile(PyFileObject), pathA.c_str());
 
     Addtolist(0x31337, RED, L"[python-loader] Plugin fully initialized.");
     return PLUGIN_VERSION;
