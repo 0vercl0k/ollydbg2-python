@@ -1,16 +1,30 @@
 #include <stdio.h>
 #include <windows.h>
+#include <string>
+#include "plugin.h"
 
 extern "C" {
 	#include <python.h>
 };
 
-#include "plugin.h"
+// Constants
+#define CLASS_NAME L"script_loading window"
 
-static int handle_about(t_table* pTable, wchar_t* pName, ulong index, int nMode);
-static int handle_script_loading(t_table* pTable, wchar_t* pName, ulong index, int nMode);
+#define MENU_LOAD_SCRIPT_IDX 1
+#define MENU_ABOUT_IDX 2
 
-static HINSTANCE g_hinst = 0;
+#define WINDOW_BUTTON_OK_IDX 0x8801
+#define WINDOW_EDITBOX_IDX 0x8802
+
+// Prototypes
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved);
+LRESULT CALLBACK WindowProc_script_loading(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode);
+void spwan_window(void);
+void execute_python_script(wchar_t *path);
+
+// Global variables
+HINSTANCE g_hinst = 0;
 
 /*
 typedef struct t_menu                      // Menu descriptor
@@ -26,17 +40,17 @@ typedef struct t_menu                      // Menu descriptor
 	};
 } t_menu;
 */
-static t_menu g_MainMenu[] =
+t_menu g_MainMenu[] =
 {
 	{
 		L"Load your script", 
 		L"Load in OllyDBG your custom python script.",  
-		K_NONE, handle_script_loading, NULL, 0
+		K_NONE, handle_menu, NULL, MENU_LOAD_SCRIPT_IDX
 	},
     {
 		L"About", 
 		L"Fire the about messagebox.",  
-		K_NONE, handle_about, NULL, 0
+		K_NONE, handle_menu, NULL, MENU_ABOUT_IDX
 	},
     { NULL, NULL, K_NONE, NULL, NULL, 0 }
 };
@@ -49,12 +63,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
     return TRUE;  // Successful DLL_PROCESS_ATTACH.
 }
 
-/* This routine is required! */
-pentry (int) ODBG2_Pluginquery(
-	int ollydbgversion,
-    wchar_t pluginname[SHORTNAME],
-    wchar_t pluginversion[SHORTNAME]
-)
+/*
+	This routine is required by the OllyDBG plugin engine! 
+*/
+pentry (int) ODBG2_Pluginquery(int ollydbgversion, wchar_t pluginname[SHORTNAME], wchar_t pluginversion[SHORTNAME])
 {
 	// Yeah, the plugin interface in the v1/v2 are different
     if(ollydbgversion != PLUGIN_VERSION)
@@ -67,9 +79,13 @@ pentry (int) ODBG2_Pluginquery(
 	// Initialize the python environment, prepare the hooks
 	Py_Initialize();
 
-	// XXX: hardcoded path, c'mon!
-	PyObject* PyFileObject = PyFile_FromString("C:\\Debugger\\OllyDbg\\odbg200\\hook.py", "r");
-	PyRun_SimpleFile(PyFile_AsFile(PyFileObject), "C:\\Debugger\\OllyDbg\\odbg200\\hook.py");
+	std::wstring path(ollydir);
+	path += L"\\hook.py";
+
+	Addtolist(0x31337, WHITE, L"[python-loader] Preparing to hook stdout/stderr of the python environment (%s)..", path.c_str());
+	//XXX: conversion between std::string <-> std::wstring 
+	PyObject* PyFileObject = PyFile_FromString("D:\\Codes\\OllyDBG2-Python\\hook.py", "r");
+	PyRun_SimpleFile(PyFile_AsFile(PyFileObject), "D:\\Codes\\OllyDBG2-Python\\hook.py");
 
 	Addtolist(0x31337, RED, L"[python-loader] Plugin fully initialized.");
 	return PLUGIN_VERSION;
@@ -81,7 +97,9 @@ pentry (void) ODBG2_Plugindestroy(void)
 	Py_Finalize();
 }
 
-/* Adds items to OllyDbgs menu system. */
+/*
+	Adds items to OllyDbgs menu system.
+*/
 extc _export t_menu* cdecl ODBG2_Pluginmenu(wchar_t* type)
 {
     if(wcscmp(type, PWM_MAIN) == 0)
@@ -90,36 +108,219 @@ extc _export t_menu* cdecl ODBG2_Pluginmenu(wchar_t* type)
     return NULL;
 }
 
-static int handle_about(t_table* pTable, wchar_t* pName, ulong index, int nMode)
+/*
+	The Window procedure used by the window we display in order
+	to know which python script the user wants to execute.
+*/
+LRESULT CALLBACK WindowProc_script_loading(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg) 
+    {
+		case WM_SIZE: 
+        // Set the size and position of the window. 
+		case WM_PAINT: 
+        // Paint the window's client area.
+        case WM_CREATE: 
+            return 0; 
+ 
+        case WM_DESTROY: 
+            // Clean up window-specific data objects.
+			PostQuitMessage(0);
+            return 0; 
+ 
+        // 
+        // Process other messages. 
+        // 
+		case WM_COMMAND:
+		{
+			if(LOWORD(wParam) == WINDOW_BUTTON_OK_IDX)
+			{
+				wchar_t *buffer = NULL;
+				int nb_character = GetWindowTextLength(GetDlgItem(hwnd, WINDOW_EDITBOX_IDX));
+
+				if(nb_character == 0)
+					break;
+
+				buffer = (wchar_t*)malloc(sizeof(wchar_t) * (nb_character + 1));
+				if(buffer != NULL)
+				{
+					GetDlgItemText(hwnd, WINDOW_EDITBOX_IDX, buffer, nb_character - 1);
+
+					execute_python_script(buffer);
+
+					SendMessage(hwnd, WM_CLOSE, 0, 0);
+					free(buffer);
+				}
+				else
+					Addtolist(0, RED, L"[python-loader] buffer allocation failed.");
+			}
+
+			break;
+		}
+
+        default: 
+            return DefWindowProc(hwnd, uMsg, wParam, lParam); 
+    }
+
+	return 0;
+}
+
+/*
+	Spawn a nice (ok, not that nice) window to ask you the path of
+	the python script you want to execute inside OllyDBG.
+*/
+void spawn_window(void)
+{
+	WNDCLASSEX winClass = {0};
+	MSG msg = {0};
+	ATOM classId = 0;
+	HWND hWindow = 0, hEditBox = 0, hButtonOk = 0;
+			
+	winClass.cbSize = sizeof(WNDCLASSEX);
+	winClass.lpfnWndProc = WindowProc_script_loading;
+	winClass.hInstance = g_hinst;
+	winClass.lpszClassName = CLASS_NAME;
+	winClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
+
+	/* Create a lil windows to launch your script */
+	classId = RegisterClassEx(&winClass);
+	if(classId == 0)
+	{
+		Addtolist(0, RED, L"[python-loader] RegisterClassEx failed: %d.", GetLastError());
+		goto end;
+	}
+
+	hWindow = CreateWindowEx(
+		0,
+		CLASS_NAME,
+		L"Which python script should we execute ?",
+		WS_BORDER | WS_SYSMENU,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		400,
+		100,
+		hwollymain,
+		NULL,
+		g_hinst,
+		NULL
+	);
+
+	if(hWindow == NULL)
+	{
+		Addtolist(0, RED, L"[python-loader] CreateWindowEx window failed: %d.", GetLastError());
+		goto end;
+	}
+
+	hButtonOk = CreateWindowEx(
+		0,
+		L"BUTTON",
+		L"Execute it!",
+		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		10,
+		50,
+		80,
+		20,
+		hWindow,
+		(HMENU)WINDOW_BUTTON_OK_IDX,
+		g_hinst,
+		NULL
+	);
+
+	if(hButtonOk == NULL)
+	{
+		Addtolist(0, RED, L"[python-loader] CreateWindowEx button failed: %d.", GetLastError());
+		goto end;
+	}
+
+	hEditBox = CreateWindowEx(
+		0,
+		L"EDIT",
+		L"C:\\",
+		WS_CHILD | WS_VISIBLE | WS_BORDER,
+		5,
+		5,
+		385,
+		40,
+		hWindow,
+		(HMENU)WINDOW_EDITBOX_IDX,
+		g_hinst,
+		NULL
+	);
+
+	if(hEditBox == NULL)
+	{
+		Addtolist(0, RED, L"[python-loader] CreateWindowEx editbox failed: %d.", GetLastError());
+		goto end;
+	}
+
+	ShowWindow(hWindow, SW_SHOW);
+	UpdateWindow(hWindow);	
+
+	while(GetMessage(&msg, NULL, 0, 0) > 0)
+	{
+		if(IsDialogMessage(hWindow, &msg) == 0)
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+
+	end:
+	if(classId != 0)
+		UnregisterClass(CLASS_NAME, g_hinst);
+}
+
+/*
+	Method called by OllyDBG in order to dispatch the actions done on
+	the menu the plugin creates.
+*/
+int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode)
 {
 	if(nMode == MENU_VERIFY)
 		return MENU_NORMAL;
 	else if(nMode == MENU_EXECUTE)
 	{
-		MessageBox(
-			hwollymain,
-			L"python loader",
-			L"About python-loader",
-			MB_OK| MB_ICONINFORMATION
-		);
+		switch(index)
+		{
+			case MENU_LOAD_SCRIPT_IDX:
+			{
+				spawn_window();
+				break;
+			}
+
+			case MENU_ABOUT_IDX:
+			{
+				MessageBox(
+					hwollymain,
+					L"python loader",
+					L"About python-loader",
+					MB_OK| MB_ICONINFORMATION
+				);
+
+				break;
+			}
+
+			default:
+				break;
+		}
+
 		return MENU_NOREDRAW;
 	}
 	else
 		return MENU_ABSENT;
 }
 
-static int handle_script_loading(t_table* pTable, wchar_t* pName, ulong index, int nMode)
+/*
+	Execute a python script located on your file system thanks to
+	the python high level API.
+*/
+void execute_python_script(wchar_t *path)
 {
-	if(nMode == MENU_VERIFY)
-		return MENU_NORMAL;
-	else if(nMode == MENU_EXECUTE)
-	{
-		// XXX: create a window, something!
-		PyObject* PyFileObject = PyFile_FromString("script.py", "r");
-		PyRun_SimpleFile(PyFile_AsFile(PyFileObject), "script.py");
+	Addtolist(0, WHITE, L"[python-loader] Trying to execute the script located here: %s..", path);
 
-		return MENU_NOREDRAW;
-	}
-	else
-		return MENU_ABSENT;
+	// XXX: do the conversion unicode -> ascii, no hardcoding dude
+	PyObject* PyFileObject = PyFile_FromString("D:\\Codes\\OllyDBG2-Python\\script.py", "r");
+	PyRun_SimpleFile(PyFile_AsFile(PyFileObject), "D:\\Codes\\OllyDBG2-Python\\script.py");
+
+	Addtolist(0, WHITE, L"[python-loader] Execution is done!", path);
 }

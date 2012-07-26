@@ -153,4 +153,4 @@ if __name__ == '__main__':
 
     p_stdout.start(hook_method)
     p_stderr.start(hook_method_stderr)
-    print 'Ready to execute some stuff!'
+    print '[python-loader hooker] Ready to execute some stuff!'
