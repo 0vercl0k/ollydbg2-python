@@ -42,14 +42,6 @@ Threadregisters = Threadregisters_TYPE(resolve_api('Threadregisters'))
 Getcputhreadid_TYPE = WINFUNCTYPE(c_ulong)
 Getcputhreadid = Getcputhreadid_TYPE(resolve_api('Getcputhreadid'))
 
-# stdapi (ulong) Readmemory(void *buf,ulong addr,ulong size,int mode);
-Readmemory_TYPE = WINFUNCTYPE(c_ulong, c_void_p, c_ulong, c_ulong, c_int)
-Readmemory = Readmemory_TYPE(resolve_api('Readmemory'))
-
-# stdapi (ulong) Writememory(const void *buf,ulong addr,ulong size,int mode);
-Writememory_TYPE = WINFUNCTYPE(c_ulong, c_void_p, c_ulong, c_ulong, c_int)
-Writememory = Writememory_TYPE(resolve_api('Writememory'))
-
 # stdapi (int) Expression(t_result *result, wchar_t *expression, uchar *data, ulong base, ulong size, ulong threadid, ulong a, ulong b, ulong mode);
 Expression_TYPE = WINFUNCTYPE(c_int, POINTER(t_result), c_wchar_p, c_void_p, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong)
 Expression_ = Expression_TYPE(resolve_api('Expression'))
@@ -80,31 +72,6 @@ def InsertNameW(addr, type_, s):
         c_int(type_),
         c_wchar_p(s)
     )
-
-def WriteMemory(addr, buff, size, mode = 0):
-    """
-    Write directly in the memory of the process
-    """
-    b = create_string_buffer(buff)
-    return Writememory(
-        addressof(b),
-        c_ulong(addr),
-        c_ulong(size),
-        c_int(mode)
-    )
-
-def ReadMemory(addr, size, mode = 0):
-    """
-    Read the memory of the process at a specific address
-    """
-    buff = create_string_buffer(size)
-    Readmemory(
-        addressof(buff),
-        c_ulong(addr),
-        c_ulong(size),
-        c_int(mode)
-    )
-    return buff.raw
 
 def ThreadRegisters(threadid):
     """

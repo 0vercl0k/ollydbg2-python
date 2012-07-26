@@ -64,7 +64,7 @@ s = GetPESections()
 for i in s:
     print '%s - %#.8x' % (i.sectname, i.base)
 
-callz()
+#callz()
 print 'symbol fully imported.'
 
 regz = GetCurrentThreadRegisters()
@@ -73,7 +73,7 @@ display_registers(regz)
 # AddUserComment(0x04F6131, 'hi')
 # AddUserLabel(0x04F6131, 'sup')
 
-# print ''.join('\\x%.2x' % ord(i) for i in ReadMemory(regz.r[REG_EAX], 16, 0))
-# WriteMemory(regz.r[REG_EAX], 'testin', 4)
-# print ''.join('\\x%.2x' % ord(i) for i in ReadMemory(regz.r[REG_EAX], 16, 0))
-# print '%#.8x' % ResolveApiAddress('kernel32', 'GetProcAddress')
+print ''.join('\\x%.2x' % ord(i) for i in ReadMemory(regz.r[REG_EAX], 16, 0))
+WriteMemory(regz.r[REG_EAX], 'testin', 4)
+print ''.join('\\x%.2x' % ord(i) for i in ReadMemory(regz.r[REG_EAX], 16, 0))
+print '%#.8x' % ResolveApiAddress('kernel32', 'GetProcAddress')

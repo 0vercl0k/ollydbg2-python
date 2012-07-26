@@ -18,10 +18,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from ctypes import *
-from breakpoints_constants import *
 from breakpoints_wrappers import *
-from common import *
 
 def bp_set(address, bp_type = BP_BREAK | BP_MANUAL):
     """
