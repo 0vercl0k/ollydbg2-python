@@ -19,6 +19,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from breakpoints_wrappers import *
+from utils_wrappers import CheckForDebugEvent
+from utils import Run
 
 def bp_set(address, bp_type = BP_BREAK | BP_MANUAL):
     """
@@ -34,33 +36,3 @@ def bp_goto(address):
     """
     bp_set(address, OneShotBreakpoint)
     Run()
-
-
-def AddUserComment(address, s):
-    """
-    Add a user comment at a specific address ; it's like using the shortcut ';'
-    """
-    return InsertNameW(
-        address,
-        NM_COMMENT,
-        s
-    )
-
-def AddUserLabel(address, s):
-    """
-    Add a user label at a specific address ; it's like using the shortcut ':'
-    """
-    return InsertNameW(
-        address,
-        NM_LABEL,
-        s
-    )
-
-def GetPESections():
-    mod = FindMainModule()
-    n = mod.nsect
-    sections = []
-    for i in range(n):
-        section = mod.sect[i]
-        sections.append(section)
-    return sections

@@ -61,7 +61,6 @@ def WriteMemory(addr, buff, size, mode = 0):
 
     return n
 
-
 def ReadMemory(addr, size, mode = 0):
     """
     Read the memory of the process at a specific address

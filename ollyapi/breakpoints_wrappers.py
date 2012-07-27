@@ -26,43 +26,11 @@ from breakpoints_constants import *
 Setint3breakpoint_TYPE = WINFUNCTYPE(c_int, c_ulong, c_ulong, c_int, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
 Setint3breakpoint = Setint3breakpoint_TYPE(resolve_api('Setint3breakpoint'))
 
-# stdapi (int) Run(t_status status,int pass);
-Run_TYPE = WINFUNCTYPE(c_int, c_int, c_int)
-Run_ = Run_TYPE(resolve_api('Run'))
-
-# stdapi (int) InsertnameW(ulong addr,int type,wchar_t *s);
-InsertnameW_TYPE = WINFUNCTYPE(c_int, c_ulong, c_int, c_wchar_p)
-InsertnameW = InsertnameW_TYPE(resolve_api('InsertnameW'))
-
-# stdapi (t_module *) Findmainmodule(void);
-Findmainmodule_TYPE = WINFUNCTYPE(POINTER(t_module))
-Findmainmodule = Findmainmodule_TYPE(resolve_api('Findmainmodule'))
-
-
 # stdapi (ulong)   Assemble(wchar_t *src,ulong ip,uchar *buf,ulong nbuf,int mode,
 #                    wchar_t *errtxt);
 # stdapi (ulong)   Disasm(uchar *cmd,ulong cmdsize,ulong cmdip,uchar *cmddec,
 #                    t_disasm *cmdda,int cmdmode,t_reg *cmdreg,
 #                    t_predict *cmdpredict);
-
-def FindMainModule():
-    r = Findmainmodule()
-    #XXX: check NULL return
-    return r.contents
-
-def InsertNameW(addr, type_, s):
-    return InsertnameW(
-        c_ulong(addr),
-        c_int(type_),
-        c_wchar_p(s)
-    )
-
-
-def Run(status = STAT_RUNNING, pass_ = 0):
-    """
-    Run the process, step-in, step-over, whatever
-    """
-    Run_(c_int(status), c_int(pass_))
 
 def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):
     """

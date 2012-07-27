@@ -1,8 +1,34 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#
+#    script.py - A very simple script to show the stuff you can do with the python engine.
+#    Copyright (C) 2012 Axel "0vercl0k" Souchet - http://www.twitter.com/0vercl0k
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 import sys
 import os
+from struct import unpack as u
 from ollyapi import *
 
+OEP = 0x0401130
+
 def display_registers(r):
+    """
+    Display the CPU registers
+    """
     print 'EAX: %#.8x' % r.r[REG_EAX]
     print 'ECX: %#.8x' % r.r[REG_ECX]
     print 'EDX: %#.8x' % r.r[REG_EDX]
@@ -14,69 +40,37 @@ def display_registers(r):
     print 'ESI: %#.8x' % r.r[REG_ESI]
     print 'EDI: %#.8x' % r.r[REG_EDI]
 
-def get_name_address_symbols(f):
-    """
-     Address         Publics by Value
+print 'Aight, ready for the demonstration'
+print 'First, here are the CPU register of the process:'
+regz = GetCurrentThreadRegisters()
+display_registers(regz)
 
-     0001:00000000       sub_401000
-     0001:00000010       sub_401010
-     0001:0000002A       loc_40102A
-     0001:00000040       sub_401040
-     0001:00000090       loc_401090
-     """
-    sections = GetPESections()
-    state = None
-    symbols = []
-    for line in f.readlines():
-        line = line.strip()
-
-        if line.startswith('Address'):
-            state = 'PreMarkerOK'
-            continue
-
-        if line == '' and state == 'PreMarkerOK':
-            state = 'MarkerOK'
-            continue
-        
-        if line == '' and state == 'MarkerOK':
-            break
-        
-        if state == 'MarkerOK':
-            full_addr, name = line.split('       ', 2)
-            segment_selector, addr = full_addr.split(':', 2)
-            absolute_addr = 0
-            absolute_addr = sections[int(segment_selector) - 1].base + int(addr, 16)
-            symbols.append({
-                'name' : name,
-                'addr' : absolute_addr
-            })
-
-    return symbols
-
-def callz():
-    mapfile_path = 'b.map'
-    f = open(mapfile_path, 'r')
-    pair_address_symbol = get_name_address_symbols(f)
-    for symbol in pair_address_symbol:
-        AddUserLabel(symbol['addr'], symbol['name'])
-
+print 'Then, those are the PE sections of your process:'
 s = GetPESections()
 for i in s:
     print '%s - %#.8x' % (i.sectname, i.base)
 
-#callz()
-print 'symbol fully imported.'
+print 'Now, adding more semantic to your disassembly'
+AddUserComment(OEP, 'OK dude, actually this is the entry point.')
+AddUserLabel(OEP, 'EntryPoint')
 
-regz = GetCurrentThreadRegisters()
-display_registers(regz)
+print 'OK, where is msvcrt.strcmp ?'
+strcmp_address = ResolveApiAddress('msvcrt', 'strcmp')
 
-AddUserComment(regz.r[REG_EAX], 'hi this is EAX')
-AddUserLabel(regz.r[REG_EAX], 'sup eax')
+print 'Located at %#.8x, Lets go!' % strcmp_address
+# bp_goto(strcmp_address)
+bp_set(strcmp_address)
+Run()
 
-print ''.join('\\x%.2x' % ord(i) for i in ReadMemory(regz.r[REG_EAX], 16, 0))
+print 'Dumping the address of the password on the stack ([ARG2])'
+r = GetCurrentThreadRegisters()
+display_registers(r)
+pp_pass = r.r[REG_ESP] + 4 + 4
 
-WriteMemory(regz.r[REG_EAX], 'testin', 6)
+print 'Now getting the address of the password'
+p_pass = u('<I', ReadMemory(pp_pass, 4))[0]
 
-print ''.join('\\x%.2x' % ord(i) for i in ReadMemory(regz.r[REG_EAX], 16, 0))
+print 'Perfect, time to dump the password located at %#.8x, here it is:' % p_pass
+print ReadMemory(p_pass, 18)
 
-print '%#.8x' % ResolveApiAddress('kernel32', 'GetProcAddress')
+print "I guess it's done, hope you enjoyed it!"

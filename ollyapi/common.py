@@ -25,6 +25,8 @@ kernel32 = windll.kernel32
 # Max length of text string incl. '\0'
 TEXTLEN = 256
 
+MAXPATH = 260
+
 def resolve_api(n):
     """
     Retrieve dynamically the function address exported
