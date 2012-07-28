@@ -34,9 +34,16 @@ Run_ = Run_TYPE(resolve_api('Run'))
 Findmainmodule_TYPE = WINFUNCTYPE(POINTER(t_module))
 Findmainmodule = Findmainmodule_TYPE(resolve_api('Findmainmodule'))
 
-# stdapi (int)     Checkfordebugevent(void);
+# stdapi (int) Checkfordebugevent(void);
 Checkfordebugevent_TYPE = WINFUNCTYPE(c_int)
 Checkfordebugevent = Checkfordebugevent_TYPE(resolve_api('Checkfordebugevent'))
+
+# oddata (wchar_t) _arguments[ARGLEN];    // Command line passed to debuggee
+_arguments = resolve_api('_arguments')
+
+# stdapi (int) Closeprocess(int confirm);
+Closeprocess_TYPE = WINFUNCTYPE(c_int, c_int)
+Closeprocess = Closeprocess_TYPE(resolve_api('Closeprocess'))
 
 def InsertNameW(addr, type_, s):
     """
@@ -75,3 +82,16 @@ def CheckForDebugEvent():
     is to updated the thread registers retrieved thanks to Threadregisters()
     """
     return Checkfordebugevent()
+
+def CloseProcess(confirm = 0):
+    """
+    Close the process being debugged
+    """
+    return Closeprocess(c_int(confirm))
+
+def SetArguments(s):
+    """
+    Set the cmdline passed to the debuggee, exactly the same when you do "File > Set new arguments"
+    """
+    # XXX: maybe check if a process is loaded ?
+    wcsncpy_s(c_wchar_p(_arguments), c_int(ARGLEN), c_wchar_p(s), c_int((ARGLEN - 1)))

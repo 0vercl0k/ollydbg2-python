@@ -21,6 +21,9 @@
 from ctypes import *
 from common import *
 
+# Max length of argument string
+ARGLEN = 1024
+
 # User-defined comment
 NM_COMMENT = 0x30
 # User-defined label

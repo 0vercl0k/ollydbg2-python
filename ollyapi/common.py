@@ -22,6 +22,8 @@ from ctypes import *
 
 kernel32 = windll.kernel32
 
+wcsncpy_s = cdll.msvcrt.wcsncpy_s
+
 # Max length of text string incl. '\0'
 TEXTLEN = 256
 

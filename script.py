@@ -29,16 +29,10 @@ def display_registers(r):
     """
     Display the CPU registers
     """
-    print 'EAX: %#.8x' % r.r[REG_EAX]
-    print 'ECX: %#.8x' % r.r[REG_ECX]
-    print 'EDX: %#.8x' % r.r[REG_EDX]
-    print 'EBX: %#.8x' % r.r[REG_EBX]
-
-    print 'ESP: %#.8x' % r.r[REG_ESP]
-    print 'EBP: %#.8x' % r.r[REG_EBP]
-    
-    print 'ESI: %#.8x' % r.r[REG_ESI]
-    print 'EDI: %#.8x' % r.r[REG_EDI]
+    print 'EAX: %#.8x, ECX: %#.8x, EDX: %#.8x, EBX: %#.8x' % (r.r[REG_EAX], r.r[REG_ECX], r.r[REG_EDX], r.r[REG_EBX])
+    print 'ESP: %#.8x, EBP: %#.8x' % (r.r[REG_ESP], r.r[REG_EBP])
+    print 'ESI: %#.8x, EDI: %#.8x' % (r.r[REG_ESI], r.r[REG_EDI])
+    print 'EIP: %#.8x' % r.ip
 
 print 'Aight, ready for the demonstration'
 print 'First, here are the CPU register of the process:'
@@ -54,6 +48,9 @@ print 'Now, adding more semantic to your disassembly'
 AddUserComment(OEP, 'OK dude, actually this is the entry point.')
 AddUserLabel(OEP, 'EntryPoint')
 
+print 'Set an argument for the debuggee'
+SetArguments('mypwd')
+
 print 'OK, where is msvcrt.strcmp ?'
 strcmp_address = ResolveApiAddress('msvcrt', 'strcmp')
 
@@ -64,7 +61,6 @@ Run()
 
 print 'Dumping the address of the password on the stack ([ARG2])'
 r = GetCurrentThreadRegisters()
-display_registers(r)
 pp_pass = r.r[REG_ESP] + 4 + 4
 
 print 'Now getting the address of the password'
@@ -74,3 +70,4 @@ print 'Perfect, time to dump the password located at %#.8x, here it is:' % p_pas
 print ReadMemory(p_pass, 18)
 
 print "I guess it's done, hope you enjoyed it!"
+CloseProcess()
