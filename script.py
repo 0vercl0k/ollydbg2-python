@@ -55,16 +55,14 @@ print 'OK, where is msvcrt.strcmp ?'
 strcmp_address = ResolveApiAddress('msvcrt', 'strcmp')
 
 print 'Located at %#.8x, Lets go!' % strcmp_address
-# bp_goto(strcmp_address)
-bp_set(strcmp_address)
-Run()
+bp_goto(strcmp_address)
 
 print 'Dumping the address of the password on the stack ([ARG2])'
 r = GetCurrentThreadRegisters()
 pp_pass = r.r[REG_ESP] + 4 + 4
 
 print 'Now getting the address of the password'
-p_pass = u('<I', ReadMemory(pp_pass, 4))[0]
+p_pass = ReadDwordMemory(pp_pass)
 
 print 'Perfect, time to dump the password located at %#.8x, here it is:' % p_pass
 print ReadMemory(p_pass, 18)

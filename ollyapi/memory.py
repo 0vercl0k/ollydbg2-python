@@ -20,6 +20,7 @@
 #
 from memory_wrappers import *
 from threads_wrappers import GetCpuThreadId
+from struct import unpack as u
 
 def ResolveApiAddress(module, function):
     """
@@ -42,3 +43,10 @@ def ResolveApiAddress(module, function):
         return r.u.u
 
     return None
+
+def ReadDwordMemory(address):
+    """
+    Read a dword in memory
+    """
+    data = ReadMemory(address, 4)
+    return u('<I', data)[0]
