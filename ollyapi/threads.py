@@ -28,3 +28,23 @@ def GetCurrentThreadRegisters():
     if current_tid == 0:
         return None
     return ThreadRegisters(current_tid)
+
+def SetRegisters(r):
+    """
+    Modify several CPU registers at the same time
+    """
+    handlers = {
+        'eax' : SetEax,
+        'ebx' : SetEbx,
+        'ecx' : SetEcx,
+        'edx' : SetEdx,
+        'esi' : SetEsi,
+        'edi' : SetEdi,
+        'esp' : SetEsp,
+        'ebp' : SetEbp,
+        'eip' : SetEip
+    }
+
+    for reg_name, value in r.iteritems():
+        if reg_name in handlers:
+            handlers[reg_name](value)

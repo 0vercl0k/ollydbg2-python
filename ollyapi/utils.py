@@ -65,7 +65,6 @@ def StepOver():
     """
     Run(STAT_STEPOVER)
 
-# XXX: Seems buggy when after calling this function, you try to stepinto for example
 def ExecuteUntilRet():
     """
     Execute until RET instruction, exactly the same when you hit ctrl+F9

@@ -50,5 +50,64 @@ def GetCpuThreadId():
     return Getcputhreadid()
 
 def SetEax(eax = 0):
+    """
+    Modify the EAX register
+    """
     p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
     p_reg[0].r[REG_EAX] = eax
+
+def SetEbx(ebx = 0):
+    """
+    Modify the EBX register
+    """
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    p_reg[0].r[REG_EBX] = ebx
+
+def SetEcx(ecx = 0):
+    """
+    Modify the ECX register
+    """
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    p_reg[0].r[REG_ECX] = ecx
+
+def SetEdx(edx = 0):
+    """
+    Modify the EDX register
+    """
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    p_reg[0].r[REG_EDX] = edx
+
+def SetEsi(esi = 0):
+    """
+    Modify the ESI register
+    """
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    p_reg[0].r[REG_ESI] = esi
+
+def SetEdi(edi = 0):
+    """
+    Modify the EDI register
+    """
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    p_reg[0].r[REG_EDI] = edi
+
+def SetEsp(esp = 0):
+    """
+    Modify the ESP register
+    """
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    p_reg[0].r[REG_ESP] = esp
+
+def SetEbp(ebp = 0):
+    """
+    Modify the EBP register
+    """
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    p_reg[0].r[REG_EBP] = ebp
+
+def SetEip(eip = 0):
+    """
+    Modify the EIP register
+    """
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    p_reg[0].ip = eip
