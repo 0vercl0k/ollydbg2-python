@@ -69,12 +69,12 @@ print 'Perfect, time to dump the password located at %#.8x, here it is:' % p_pas
 print ReadMemory(p_pass, 18)
 
 print 'Now executing the function until the RET..'
-# XXX: buggy ExecuteUntilRet()
-bp_goto(0x76048B74)
+ExecuteUntilRet()
 
 print 'Modifying the return-value of the function'
 SetEax(0)
 
+# pass over the ret + test eax, eax + jne
 for i in range(3):
     StepInto()
 
