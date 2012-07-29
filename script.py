@@ -20,7 +20,6 @@
 #
 import sys
 import os
-from struct import unpack as u
 from ollyapi import *
 
 OEP = 0x0401130
