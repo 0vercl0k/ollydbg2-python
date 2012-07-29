@@ -33,6 +33,7 @@ def display_registers(r):
     print 'ESP: %#.8x, EBP: %#.8x' % (r.r[REG_ESP], r.r[REG_EBP])
     print 'ESI: %#.8x, EDI: %#.8x' % (r.r[REG_ESI], r.r[REG_EDI])
     print 'EIP: %#.8x' % r.ip
+    # TODO: EFLAGS!
 
 print 'Aight, ready for the demonstration'
 print 'First, here are the CPU register of the process:'
@@ -67,5 +68,15 @@ p_pass = ReadDwordMemory(pp_pass)
 print 'Perfect, time to dump the password located at %#.8x, here it is:' % p_pass
 print ReadMemory(p_pass, 18)
 
-print "I guess it's done, hope you enjoyed it!"
-CloseProcess()
+print 'Now executing the function until the RET..'
+# XXX: buggy ExecuteUntilRet()
+bp_goto(0x76048B74)
+
+print 'Modifying the return-value of the function'
+SetEax(0)
+
+for i in range(3):
+    StepInto()
+
+print "Yeah you're on the good-boy branch, I guess it's done, hope you enjoyed it!"
+# CloseProcess()

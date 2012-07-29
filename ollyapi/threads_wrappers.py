@@ -48,3 +48,7 @@ def GetCpuThreadId():
     Get the TID of the current thread
     """
     return Getcputhreadid()
+
+def SetEax(eax = 0):
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    p_reg[0].r[REG_EAX] = eax
