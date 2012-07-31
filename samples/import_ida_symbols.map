@@ -1,0 +1,47 @@
+
+
+  Address         Publics by Value
+
+ 0001:00000020       crt_main
+ 0001:00000130       start
+ 0001:00000318       f_function
+ 0001:00000331       g_function
+ 0001:00000351       kikoo_function
+ 0001:00000371       main_function
+ 0001:0000099C       __getmainargs
+ 0001:000009A4       __p__fmode
+ 0001:000009AC       __p__environ
+ 0001:000009B4       _cexit
+ 0001:000009BC       _setmode
+ 0001:000009C4       signal
+ 0001:000009CC       puts
+ 0001:000009D4       printf
+ 0001:000009DC       memcpy
+ 0001:000009E4       _assert
+ 0001:000009EC       malloc
+ 0001:000009FC       free
+ 0001:00000A04       SetUnhandledExceptionFilter
+ 0001:00000A0C       ExitProcess
+ 0001:00000A14       GetModuleHandleA
+ 0001:00000A1C       GetProcAddress
+ 0001:00000A24       VirtualQuery
+ 0001:00000A2C       VirtualProtect
+ 0001:00000A34       GetAtomNameA
+ 0001:00000A3C       FindAtomA
+ 0001:00000A44       AddAtomA
+ 0003:00000000       aLibgcj_s_dll
+ 0003:0000000D       a_jv_registercl
+ 0003:00000024       aHeyIMF
+ 0003:0000002F       aHeyIMG
+ 0003:0000003A       aLul
+ 0003:0000003E       aHeyS
+ 0003:00000047       aZboobz
+ 0003:00000050       a____RuntimePse
+ 0003:00000070       aVirtualqueryAd
+ 0003:000000A0       a________Gcc4_4
+ 0003:000000E8       a0CouldnTRetrie
+ 0003:00000124       aRetSizeSizeof_
+ 0003:00000170       a0CouldnTAddGcc
+ 0003:000001A0       aGcclibcygmingE
+
+Program entry point at 0001:00000130
