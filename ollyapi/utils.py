@@ -53,6 +53,13 @@ def GetPESections():
         sections.append(section)
     return sections
 
+def GetEntryPoint():
+    """
+    Get the address of the entry point of your executable
+    """
+    mod = FindMainModule()
+    return mod.entry
+
 def StepInto():
     """
     Step-into, exactly the same when you hit F7

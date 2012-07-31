@@ -22,8 +22,6 @@ import sys
 import os
 from ollyapi import *
 
-OEP = 0x0401130
-
 def display_registers(r):
     """
     Display the CPU registers
@@ -45,8 +43,8 @@ for i in s:
     print '%s - %#.8x' % (i.sectname, i.base)
 
 print 'Now, adding more semantic to your disassembly'
-AddUserComment(OEP, 'OK dude, actually this is the entry point.')
-AddUserLabel(OEP, 'EntryPoint')
+AddUserComment(GetEntryPoint(), 'OK dude, actually this is the entry point.')
+AddUserLabel(GetEntryPoint(), 'EntryPoint')
 
 print 'Set an argument for the debuggee'
 SetArguments('mypwd')
