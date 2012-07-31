@@ -48,3 +48,15 @@ def SetRegisters(r):
     for reg_name, value in r.iteritems():
         if reg_name in handlers:
             handlers[reg_name](value)
+
+def display_registers():
+    """
+    Display the CPU registers
+    """
+    r = GetCurrentThreadRegisters()
+    
+    print 'EAX: %#.8x, ECX: %#.8x, EDX: %#.8x, EBX: %#.8x' % (r.r[REG_EAX], r.r[REG_ECX], r.r[REG_EDX], r.r[REG_EBX])
+    print 'ESP: %#.8x, EBP: %#.8x' % (r.r[REG_ESP], r.r[REG_EBP])
+    print 'ESI: %#.8x, EDI: %#.8x' % (r.r[REG_ESI], r.r[REG_EDI])
+    print 'EIP: %#.8x' % r.ip
+    # TODO: EFLAGS!
