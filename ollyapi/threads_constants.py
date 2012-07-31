@@ -40,6 +40,32 @@ NMEMFIELD = 2
     REG_EDI
 ) = range(0, 8)
 
+(
+    SEG_ES,
+    SEG_CS,
+    SEG_SS,
+    SEG_DS,
+    SEG_FS,
+    SEG_GS
+) = range(0, 6)
+
+# Carry flag
+FLAG_C = 0x00000001
+# Parity flag
+FLAG_P = 0x00000004
+# Auxiliary carry flag
+FLAG_A = 0x00000010
+# Zero flag
+FLAG_Z = 0x00000040
+# Sign flag
+FLAG_S = 0x00000080
+# Single-step trap flag
+FLAG_T = 0x00000100
+# Direction flag
+FLAG_D = 0x00000400
+# Overflow flag
+FLAG_O = 0x00000800
+
 class t_memfield(Structure):
     """
     Descriptor of memory field

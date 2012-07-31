@@ -25,7 +25,7 @@ from ollyapi import *
 def main():
     print 'Aight, ready for the demonstration'
     print 'First, here are the CPU register of the process:'
-    display_registers()
+    display_all_registers()
 
     print 'Then, those are the PE sections of your process:'
     s = GetPESections()
