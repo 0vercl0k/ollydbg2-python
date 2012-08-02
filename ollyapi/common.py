@@ -22,6 +22,7 @@ from ctypes import *
 
 kernel32 = windll.kernel32
 
+# XXX: not present on XP :o
 wcsncpy_s = cdll.msvcrt.wcsncpy_s
 
 # Max length of text string incl. '\0'
