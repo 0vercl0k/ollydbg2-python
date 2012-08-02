@@ -28,9 +28,6 @@ Setint3breakpoint = Setint3breakpoint_TYPE(resolve_api('Setint3breakpoint'))
 
 # stdapi (ulong)   Assemble(wchar_t *src,ulong ip,uchar *buf,ulong nbuf,int mode,
 #                    wchar_t *errtxt);
-# stdapi (ulong)   Disasm(uchar *cmd,ulong cmdsize,ulong cmdip,uchar *cmddec,
-#                    t_disasm *cmdda,int cmdmode,t_reg *cmdreg,
-#                    t_predict *cmdpredict);
 
 def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):
     """

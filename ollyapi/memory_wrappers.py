@@ -44,7 +44,7 @@ def FlushMemoryCache():
     """
     Flushmemorycache()
 
-def WriteMemory(addr, buff, size, mode = 0):
+def WriteMemory(addr, buff, mode = 0):
     """
     Write directly in the memory of the process
     """
@@ -52,7 +52,7 @@ def WriteMemory(addr, buff, size, mode = 0):
     n = Writememory(
         addressof(b),
         c_ulong(addr),
-        c_ulong(size),
+        c_ulong(sizeof(b) - 1), # create_string_buffer adds a null byte a the end
         c_int(mode)
     )
 
