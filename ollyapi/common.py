@@ -29,6 +29,9 @@ TEXTLEN = 256
 
 MAXPATH = 260
 
+# Number of registers (of any type)
+NREG = 8
+
 def resolve_api(n):
     """
     Retrieve dynamically the function address exported

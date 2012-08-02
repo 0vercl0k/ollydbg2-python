@@ -19,9 +19,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from ctypes import *
+from common import *
 
-# Number of registers (of any type)
-NREG      = 8
 # Number of valid segment registers
 NSEG      = 6
 # Number of hardware breakpoints

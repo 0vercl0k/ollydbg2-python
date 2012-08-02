@@ -23,6 +23,10 @@ import os
 from ollyapi import *
 
 def main():
+    # disass engine testin'
+    Disass('\xc7\x44\x24\x04\xef\xbe\xad\xde')
+    Disass('\x0f\x11\x00\x41')
+
     print 'Aight, ready for the demonstration'
     print 'First, here are the CPU register of the process:'
     display_all_registers()

@@ -21,6 +21,7 @@
 from ctypes import *
 from common import *
 from utils_constants import *
+from threads_constants import t_reg
 
 # stdapi (int) InsertnameW(ulong addr,int type,wchar_t *s);
 InsertnameW_TYPE = WINFUNCTYPE(c_int, c_ulong, c_int, c_wchar_p)
@@ -44,6 +45,10 @@ _arguments = resolve_api('_arguments')
 # stdapi (int) Closeprocess(int confirm);
 Closeprocess_TYPE = WINFUNCTYPE(c_int, c_int)
 Closeprocess = Closeprocess_TYPE(resolve_api('Closeprocess'))
+
+# stdapi (ulong) Disasm(uchar *cmd,ulong cmdsize,ulong cmdip,uchar *cmddec,t_disasm *cmdda,int cmdmode,t_reg *cmdreg,t_predict *cmdpredict);
+Disasm_TYPE = WINFUNCTYPE(c_ulong, c_char_p, c_ulong, c_ulong, c_char_p, POINTER(t_disasm), c_int, POINTER(t_reg), POINTER(t_predict))
+Disasm = Disasm_TYPE(resolve_api('Disasm'))
 
 def InsertNameW(addr, type_, s):
     """
@@ -96,3 +101,27 @@ def SetArguments(s):
     """
     # XXX: maybe check if a process is loaded ?
     wcsncpy_s(c_wchar_p(_arguments), c_int(ARGLEN), c_wchar_p(s), c_int((ARGLEN - 1)))
+
+def Disass(c, address = 0):
+    """
+    Disassemble some x86 code thanks to the OllyDbg2 engine
+    """
+    di = t_disasm()
+    reg = t_reg()
+    predict = t_predict()
+
+    buff = create_string_buffer(c)
+
+    ret = Disasm(
+        buff,
+        len(buff) - 1, # create_string_buffer add a NULL byte at the end of the buffer
+        c_ulong(address),
+        None,
+        pointer(di),
+        29, # DA_TEXT | DA_OPCOMM | DA_DUMP | DA_MEMORY
+        pointer(reg),
+        pointer(predict)
+    )
+
+    print '%s %s (%d bytes)' % (di.dump, di.result, di.size)
+    return ret

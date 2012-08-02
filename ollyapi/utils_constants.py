@@ -501,3 +501,229 @@ class t_module(Structure):
         # List of called modules
         ('callmod', ((c_wchar * NCALLMOD) * SHORTNAME))
     ]
+
+class t_operand_u(Union):
+    """
+    Value of operand
+    Size: 16bytes
+    """
+    _pack_ = 1
+    _fields_ = [
+        # Value of operand (integer form)
+        ('u', c_ulong),
+        # Value of operand (signed form)
+        ('s', c_long),
+        # Value of operand (general form)
+        ('value', c_byte * 16)
+    ]
+
+class t_operand(Structure):
+    """
+    Description of disassembled operand
+    Size: 1120bytes
+    """
+    _pack_ = 4
+    _fields_ = [
+        # Description of operand.
+
+        # Operand features, set of OP_xxx
+        ('features', c_ulong),
+        # Operand type, set of B_xxx
+        ('arg', c_ulong),
+        # DEC_INT, DEC_FLOAT or DEC_UNKNOWN
+        ('optype', c_int),
+        # Total size of data, bytes
+        ('opsize', c_int),
+        # Size of element (opsize exc. MMX/SSE)
+        ('granularity', c_int),
+        # REG_xxx (also ESP in POP) or REG_UNDEF
+        ('reg', c_int),
+        # List of used regs (not in address!)
+        ('uses', c_ulong),
+        # List of modified regs (not in addr!)
+        ('modifies', c_ulong),
+
+        # Description of memory address.
+
+        # Selector (SEG_xxx)
+        ('seg', c_int),
+        # Scales of registers in memory address
+        ('scale', c_byte * NREG),
+        # List of registers used in address
+        ('aregs', c_ulong),
+        # Constant or const part of address
+        ('opconst', c_ulong),
+
+        # Value of operand.
+
+        # Offset to selector (usually addr)
+        ('offset', c_ulong),
+        # Immediate selector in far jump/call
+        ('selector', c_ulong),
+        # Address of operand in memory
+        ('addr', c_ulong),
+        # Value of operand
+        ('u', t_operand_u),
+        # Actual memory (if OP_ACTVALID)
+        ('actual', c_byte * 16),
+
+        # Textual decoding.
+
+        # Operand, decoded to text
+        ('text', c_wchar * TEXTLEN),
+        # Commented address and contents
+        ('comment', c_wchar * TEXTLEN)
+    ]
+
+# Maximal allowed number of operands
+NOPERAND = 4
+
+class t_disasm(Structure):
+    """
+    Disassembled command
+    Size: 6348bytes
+    """
+    _pack_ = 4
+    _fields_ = [
+        # In the case that DA_HILITE flag is set, fill these members before calling
+        # Disasm(). Parameter hilitereg has priority over hiliteindex.
+
+        # One of OP_SOMEREG if reg highlighting
+        ('hilitereg', c_ulong),
+        # Index of register to highlight
+        ('hiregindex', c_int),
+        # Index of highlighting scheme (0: none)
+        ('hiliteindex', c_int),
+
+        # Starting from this point, no need to initialize the members of t_disasm.
+
+        # Address of first command byte
+        ('ip', c_ulong),
+        # Full length of command, bytes
+        ('size', c_ulong),
+        # Type of command, D_xxx
+        ('cmdtype', c_ulong),
+        # List of prefixes, set of PF_xxx
+        ('prefixes', c_ulong),
+        # Number of prefixes, including SSE2
+        ('nprefix', c_ulong),
+        # Offset of first 4-byte fixup or -1
+        ('memfixup', c_ulong),
+        # Offset of second 4-byte fixup or -1
+        ('immfixup', c_ulong),
+        # Set of DAE_xxx
+        ('errors', c_int),
+        # Set of DAW_xxx
+        ('warnings', c_int),
+
+        # Note that used registers are those which contents is necessary to create
+        # result. Modified registers are those which value is changed. For example,
+        # command MOV EAX,[EBX+ECX] uses EBX and ECX and modifies EAX. Command
+        # ADD ESI,EDI uses ESI and EDI and modifies ESI.
+        
+        # List of used registers
+        ('uses', c_ulong),
+        # List of modified registers
+        ('modifies', c_ulong),
+
+        # Useful shortcuts.
+
+        # Condition, one of DAF_xxx
+        ('condition', c_int),
+        # Jump/call destination or 0
+        ('jmpaddr', c_ulong),
+        # Constant in memory address or 0
+        ('memconst', c_ulong),
+        # Data size in ENTER/RETN/RETF
+        ('stackinc', c_ulong),
+
+        # Operands.
+        ('op', t_operand * NOPERAND),
+
+        # Textual decoding.
+
+        # Hex dump of the command
+        ('dump', c_wchar * TEXTLEN),
+        # Fully decoded command as text
+        ('result', c_wchar * TEXTLEN),
+        # Mask to highlight result
+        ('mask', c_byte * TEXTLEN),
+        # Mask corresponds to result
+        ('maskvalid', c_int),
+        # Comment that applies to whole command
+        ('comment', c_wchar * TEXTLEN)
+    ]
+
+class t_predict_stack(Structure):
+    """
+    Size: 12bytes
+    """
+    _pack_ = 4
+    _fields_ = [
+        # Offset of data on stack (signed!)
+        ('soffset', c_long),
+        # State of stack data, set of PST_xxx
+        ('sstate', c_ulong),
+        # Constant related to stack data
+        ('sconst', c_ulong)
+    ]
+
+class t_predict_mem(Structure):
+    """
+    Size: 12bytes
+    """
+    _pack_ = 4
+    _fields_ = [
+        # Address of doubleword variable
+        ('maddr', c_ulong),
+        # State of memory, set of PST_xxx
+        ('mstate', c_ulong),
+        # Constant related to memory data
+        ('mconst', c_ulong)
+    ]
+
+# Number of predicted stack entries
+NSTACK  = 12
+# Max no. of predicted stack mod addr
+NSTKMOD = 24
+# Number of predicted memory locations
+NMEM    = 2
+
+class t_predict(Structure):
+    """
+    Prediction of execution
+    Size: 372bytes
+    """
+    _pack_ = 4
+    _fields_ = [
+        # Predicted EIP or NULL if uncertain
+        ('addr', c_ulong),
+        # Must be 1
+        ('one', c_ulong),
+        # Type of prediction, TY_xxx/PR_xxx
+        ('type', c_ulong),
+        # State of register, set of PST_xxx
+        ('rstate', c_ulong * NREG),
+        # Constant related to register
+        ('rconst', c_ulong * NREG),
+        # State of EIP after jump or return
+        ('jmpstate', c_ulong),
+        # Constant related to jump or return
+        ('jmpconst', c_ulong),
+        # Offset of ESP at PUSH EBP
+        ('espatpushbp', c_ulong),
+        # Number of valid stack entries
+        ('nstack', c_int),
+        ('stack', t_predict_stack * NSTACK),
+        # Number of valid stkmod addresses
+        ('nstkmod', c_int),
+        # Addresses of stack modifications
+        ('stkmod', c_ulong * NSTKMOD),
+        # Number of valid memory entries
+        ('nmem', c_int),
+        ('mem', t_predict_mem * NMEM),
+        # State of result of command execution
+        ('resstate', c_ulong),
+        # Constant related to result
+        ('resconst', c_ulong)
+    ]
