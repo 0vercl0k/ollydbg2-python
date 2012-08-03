@@ -50,6 +50,10 @@ Closeprocess = Closeprocess_TYPE(resolve_api('Closeprocess'))
 Disasm_TYPE = WINFUNCTYPE(c_ulong, c_char_p, c_ulong, c_ulong, c_char_p, t_disasm_p, c_int, t_reg_p, t_predict_p)
 Disasm = Disasm_TYPE(resolve_api('Disasm'))
 
+# stdapi (ulong) Assemble(wchar_t *src,ulong ip,uchar *buf,ulong nbuf,int mode,wchar_t *errtxt);
+Assemble_TYPE = WINFUNCTYPE(c_ulong, c_wchar_p, c_ulong, c_char_p, c_ulong, c_int, c_wchar_p)
+Assemble = Assemble_TYPE(resolve_api('Assemble'))
+
 def InsertNameW(addr, type_, s):
     """
     That function is used to add label and comment directly on the disassembly
@@ -102,7 +106,7 @@ def SetArguments(s):
     # XXX: maybe check if a process is loaded ?
     wcsncpy_s(c_wchar_p(_arguments), c_int(ARGLEN), c_wchar_p(s), c_int((ARGLEN - 1)))
 
-def Disass_(c, address = 0):
+def Disasm_(c, address = 0):
     """
     Disassemble some x86 code thanks to the OllyDbg2 engine
     """
@@ -124,3 +128,30 @@ def Disass_(c, address = 0):
     )
 
     return (size_instr, di.result)
+
+def Assemble_(s, address = 0):
+    """
+    Assemble some x86 stuff
+    """
+
+    # the longuest x86 instruction is 15 bytes long
+    code = create_string_buffer(15)
+
+    # XXX: it should be enough (?)
+    error_msg = (c_wchar * 100)()
+
+    sizeof_assembled = Assemble(
+        c_wchar_p(s),
+        c_ulong(address),
+        code,
+        len(code),
+        1,
+        error_msg
+    )
+
+    # you submit invalid x86 assembly
+    if len(error_msg.value) > 0:
+        print 'failed: ' + error_msg.value
+        return (0, 0)
+
+    return (code[:sizeof_assembled], sizeof_assembled)

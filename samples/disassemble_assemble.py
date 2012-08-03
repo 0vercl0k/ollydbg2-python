@@ -35,6 +35,14 @@ def main():
     # classic instruction + invalid one + sse instruction
     print Disass('\xc7\x44\x24\x04\xef\xbe\xad\xde' + '\xff' + '\x41')
 
+    # classic instruction + classic instruction + jmp -- test if the jmp is correctly disassembled
+    print Disass('\x8B\x00' + '\x3D\x91\x00\x00\xC0' + '\x77\x3B', 0x40115C)
+
+    b, size = Assemble_('mov dword ptr [eax+10], 0xdeadbeef')
+    print repr(b)
+
+    b, size = Assemble_('suce')
+    b, size = Assemble_('mov eax, kikoo')
     return 1
 
 if __name__ == '__main__':

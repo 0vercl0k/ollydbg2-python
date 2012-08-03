@@ -88,7 +88,7 @@ def Disass(c, address = 0):
     sizeof_to_disass = len(c)
 
     while sizeof_disassembled_stuff != sizeof_to_disass:
-        size_current_instruction, disass = Disass_(c, address + sizeof_disassembled_stuff)
+        size_current_instruction, disass = Disasm_(c, address + sizeof_disassembled_stuff)
         
         # don't want unicode string
         disass = str(disass)

@@ -109,7 +109,7 @@ if __name__ == '__main__':
         # yeah, each time you do a print 'something' python call two times
         # sys.stdout.write ; first with the string 'something' and the second
         # with only an '\n'
-        if s[0] == '\n' and len(s) == 1:
+        if len(s) == 1 and s[0] == '\n':
             return
 
         # now ollydbg just don't care if you have an '\n' in your string
