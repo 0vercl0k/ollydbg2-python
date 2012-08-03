@@ -155,3 +155,5 @@ class t_reg(Structure):
         # Known memory fields from run trace
         ('mem', t_memfield * NMEMFIELD)
     ]
+
+t_reg_p = POINTER(t_reg)

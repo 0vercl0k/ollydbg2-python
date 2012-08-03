@@ -66,3 +66,5 @@ class t_result(Structure):
         # Value decoded to string
         ('value', c_wchar * TEXTLEN)
     ]
+
+t_result_p = POINTER(t_result)

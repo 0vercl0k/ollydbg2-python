@@ -27,7 +27,7 @@ Resumeallthreads_TYPE = WINFUNCTYPE(None)
 Resumeallthreads  = Resumeallthreads_TYPE(resolve_api('Resumeallthreads'))
 
 # stdapi (t_reg *) Threadregisters(ulong threadid);
-Threadregisters_TYPE = WINFUNCTYPE(POINTER(t_reg), c_ulong)
+Threadregisters_TYPE = WINFUNCTYPE(t_reg_p, c_ulong)
 Threadregisters = Threadregisters_TYPE(resolve_api('Threadregisters'))
 
 # stdapi (ulong) Getcputhreadid(void);

@@ -502,6 +502,8 @@ class t_module(Structure):
         ('callmod', ((c_wchar * NCALLMOD) * SHORTNAME))
     ]
 
+t_module_p = POINTER(t_module)
+
 class t_operand_u(Union):
     """
     Value of operand
@@ -654,6 +656,8 @@ class t_disasm(Structure):
         ('comment', c_wchar * TEXTLEN)
     ]
 
+t_disasm_p = POINTER(t_disasm)
+
 class t_predict_stack(Structure):
     """
     Size: 12bytes
@@ -727,3 +731,5 @@ class t_predict(Structure):
         # Constant related to result
         ('resconst', c_ulong)
     ]
+
+t_predict_p = POINTER(t_predict)

@@ -31,7 +31,7 @@ Writememory_TYPE = WINFUNCTYPE(c_ulong, c_void_p, c_ulong, c_ulong, c_int)
 Writememory = Writememory_TYPE(resolve_api('Writememory'))
 
 # stdapi (int) Expression(t_result *result, wchar_t *expression, uchar *data, ulong base, ulong size, ulong threadid, ulong a, ulong b, ulong mode);
-Expression_TYPE = WINFUNCTYPE(c_int, POINTER(t_result), c_wchar_p, c_void_p, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong)
+Expression_TYPE = WINFUNCTYPE(c_int, t_result_p, c_wchar_p, c_void_p, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong)
 Expression_ = Expression_TYPE(resolve_api('Expression'))
 
 # stdapi (void) Flushmemorycache(void);
@@ -50,7 +50,7 @@ def WriteMemory(addr, buff, mode = 0):
     """
     b = create_string_buffer(buff)
     n = Writememory(
-        addressof(b),
+        c_void_p(addressof(b)),
         c_ulong(addr),
         c_ulong(sizeof(b) - 1), # create_string_buffer adds a null byte a the end
         c_int(mode)
@@ -67,7 +67,7 @@ def ReadMemory(addr, size, mode = 0):
     """
     buff = create_string_buffer(size)
     Readmemory(
-        addressof(buff),
+        c_void_p(addressof(buff)),
         c_ulong(addr),
         c_ulong(size),
         c_int(mode)
@@ -80,7 +80,7 @@ def Expression(result, expression, data, base, size, threadid, a, b, mode):
         * get an exported function address easily thanks to the notation module.function_name
     """
     r = Expression_(
-        byref(result),
+        t_result_p(result),
         c_wchar_p(expression),
         c_void_p(data),
         c_ulong(base),

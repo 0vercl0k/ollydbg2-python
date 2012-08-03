@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-#    play_with_testing.py - A very simple script to show the stuff you can do with the python engine.
+#    testing.py - A very simple script to show the stuff you can do with the python engine.
 #    Copyright (C) 2012 Axel "0vercl0k" Souchet - http://www.twitter.com/0vercl0k
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -23,10 +23,6 @@ import os
 from ollyapi import *
 
 def main():
-    # disass engine testin'
-    Disass('\xc7\x44\x24\x04\xef\xbe\xad\xde')
-    Disass('\x0f\x11\x00\x41')
-
     print 'Aight, ready for the demonstration'
     print 'First, here are the CPU register of the process:'
     display_all_registers()

@@ -77,3 +77,33 @@ def ExecuteUntilRet():
     Execute until RET instruction, exactly the same when you hit ctrl+F9
     """
     Run(STAT_TILLRET)
+
+def Disass(c, address = 0):
+    """
+    A high level version of the disass function ; this one is able to disassemble
+    more than one instruction.
+    """
+    sizeof_disassembled_stuff = 0
+    complete_disass = []
+    sizeof_to_disass = len(c)
+
+    while sizeof_disassembled_stuff != sizeof_to_disass:
+        size_current_instruction, disass = Disass_(c, address + sizeof_disassembled_stuff)
+        
+        # don't want unicode string
+        disass = str(disass)
+
+        # The engine didn't find a valid x86 code
+        if disass == '???':
+            break
+
+        # In the other case, we have valid assembly code
+        complete_disass.append({
+            'text' : disass,
+            'size' : size_current_instruction    
+        })
+
+        sizeof_disassembled_stuff += size_current_instruction
+        c = c[size_current_instruction:]
+
+    return complete_disass
