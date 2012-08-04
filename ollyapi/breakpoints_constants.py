@@ -21,7 +21,6 @@
 from ctypes import *
 from common import *
 
-# INT3 breakpoints types
 # Pause always
 BP_BREAK  = 0x03000000
 
@@ -31,6 +30,10 @@ BP_MANUAL = 0x00001000
 # Stop and reset this bit
 BP_ONESHOT = 0x00002000
 
+# Conditional breakpoint
+BP_COND = 0x00040000
+
+# INT3 breakpoints types
 # Breakpoint who paused the process when it is reached, and disable it after: One Shot
 OneShotBreakpoint = BP_ONESHOT | BP_BREAK
 

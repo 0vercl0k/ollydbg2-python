@@ -37,10 +37,22 @@ def bps_goto(address):
     bp_set(address, OneShotBreakpoint)
     Run()
 
+def bpsc_set(address, cond, bp_type = BP_BREAK | BP_MANUAL):
+    """
+    Set a software conditional breakpoint
+
+    Note: it doesn't seem possible to have a software conditional OneShotBreakpoint 
+    """
+    return SetInt3Breakpoint(
+        address,
+        bp_type | BP_COND,
+        condition = cond
+    )
+
 # XXX: not very elegant
 next_index_hardware_breakpoint = 0
 
-def bph_set(address, type_, size = 1, slot = 0):
+def bph_set(address, type_, size = 1, slot = 0, condi = ''):
     """
     Set a hardware breakpoint
     """
@@ -61,8 +73,11 @@ def bph_set(address, type_, size = 1, slot = 0):
     if 'x' in type_:
         type_dword |= BP_EXEC
 
+    if condi != '':
+        type_dword |= BP_COND
+
     # ensure the size is 1byte if this is an execution breakpoint
-    if type_dword == ExecutionBreakpoint:
+    if type_dword == ExecutionBreakpoint or type_dword == ExecutionBreakpoint | BP_COND:
         size = 1
 
     # if we have used all the hwbp slot, wrap to 0
@@ -77,7 +92,7 @@ def bph_set(address, type_, size = 1, slot = 0):
         0,
         0,
         0,
-        '',
+        condi,
         '',
         ''
     )
@@ -87,3 +102,15 @@ def bph_set(address, type_, size = 1, slot = 0):
         next_index_hardware_breakpoint += 1
 
     return r
+
+def bphc_set(address, type_, condi, size = 1, slot = 0):
+    """
+    Set a conditional hardware breakpoint
+    """
+    return bph_set(
+        address,
+        type_,
+        size,
+        slot,
+        condi
+    )
