@@ -95,7 +95,7 @@ def Disass(c, address = 0):
 
         # The engine didn't find a valid x86 code
         if disass == '???':
-            break
+            raise Exception("You have submitted stuff OllyDBG doesn't know how to disassemble")
 
         # In the other case, we have valid assembly code
         complete_disass.append({
@@ -107,3 +107,26 @@ def Disass(c, address = 0):
         c = c[size_current_instruction:]
 
     return complete_disass
+
+def Assemble(s, address = 0):
+    """
+    A high level version of the assemble version ; you can assemble several instructions
+    each instruction must be separated by a ';'
+
+    Example: mov eax, 0xdeadbeef ; add eax, 4
+    """
+    instrs = s.split(';')
+    total_size = 0
+    code = ''
+
+    for instr in instrs:
+        assem, size, err = Assemble_(instr, address + len(code))
+
+        # your instruction doesn't seem possible to assemble
+        if size == 0:
+            raise Exception("OllyDBG doesn't know how to assemble this instruction: %s (error msg: %s)" % (instr, err))
+
+        total_size += size
+        code += assem
+
+    return (code, size)

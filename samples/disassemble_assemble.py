@@ -30,19 +30,38 @@ def main():
     print Disass('\x0f\x11\x00' + '\x41')
 
     # Invalid instruction
-    print Disass('\xff')
+    try:
+        print Disass('\xff')
+    except Exception, e:
+        print e
 
-    # classic instruction + invalid one + sse instruction
-    print Disass('\xc7\x44\x24\x04\xef\xbe\xad\xde' + '\xff' + '\x41')
+    try:
+        # classic instruction + invalid one + sse instruction
+        print Disass('\xc7\x44\x24\x04\xef\xbe\xad\xde' + '\xff' + '\x41')
+    except Exception, e:
+        print e
 
     # classic instruction + classic instruction + jmp -- test if the jmp is correctly disassembled
     print Disass('\x8B\x00' + '\x3D\x91\x00\x00\xC0' + '\x77\x3B', 0x40115C)
 
-    b, size = Assemble_('mov dword ptr [eax+10], 0xdeadbeef')
+    # Now, let's play with the assembler
+    b, size = Assemble('mov dword ptr [eax+10], 0xdeadbeef')
     print repr(b)
 
-    b, size = Assemble_('suce')
-    b, size = Assemble_('mov eax, kikoo')
+    # Try to assemble random stuff
+    try:
+        b, size = Assemble('where is my bawobab')
+    except Exception, e:
+        print e
+
+    try:
+        b, size = Assemble('mov eax, kikoo')
+    except Exception, e:
+        print e
+
+    b, size = Assemble('mov dword ptr [esp+4], 0xBAB00 ; movups [eax], xmm0 ; inc ecx')
+    print Disass(b)
+
     return 1
 
 if __name__ == '__main__':

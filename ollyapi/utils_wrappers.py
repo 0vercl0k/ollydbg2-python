@@ -151,7 +151,6 @@ def Assemble_(s, address = 0):
 
     # you submit invalid x86 assembly
     if len(error_msg.value) > 0:
-        print 'failed: ' + error_msg.value
-        return (0, 0)
+        return (0, 0, error_msg.value)
 
-    return (code[:sizeof_assembled], sizeof_assembled)
+    return (code[:sizeof_assembled], sizeof_assembled, error_msg.value)
