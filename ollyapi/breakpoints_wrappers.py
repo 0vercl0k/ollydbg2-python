@@ -26,6 +26,10 @@ from breakpoints_constants import *
 Setint3breakpoint_TYPE = WINFUNCTYPE(c_int, c_ulong, c_ulong, c_int, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
 Setint3breakpoint = Setint3breakpoint_TYPE(resolve_api('Setint3breakpoint'))
 
+# stdapi (int) Sethardbreakpoint(int index,ulong size,ulong type,int fnindex,ulong addr,int limit,int count,wchar_t *condition,wchar_t *expression,wchar_t *exprtype);
+Sethardbreakpoint_TYPE = WINFUNCTYPE(c_int, c_int, c_ulong, c_ulong, c_int, c_ulong, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
+Sethardbreakpoint = Sethardbreakpoint_TYPE(resolve_api('Sethardbreakpoint'))
+
 def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):
     """
     Python wrapper for the Setint3breakpoint function
@@ -34,6 +38,23 @@ def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, c
         c_ulong(address),
         c_ulong(type_bp),
         c_int(fnindex),
+        c_int(limit),
+        c_int(count),
+        c_wchar_p(condition),
+        c_wchar_p(expression),
+        c_wchar_p(exprtype)
+    )
+
+def SetHardBreakpoint(address, index = 0, size = 0, type_ = 0, fnindex = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):
+    """
+    Set a hardware breakpoint
+    """
+    return Sethardbreakpoint(
+        c_int(index),
+        c_ulong(size),
+        c_ulong(type_),
+        c_int(fnindex),
+        c_ulong(address),
         c_int(limit),
         c_int(count),
         c_wchar_p(condition),
