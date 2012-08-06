@@ -54,6 +54,14 @@ Disasm = Disasm_TYPE(resolve_api('Disasm'))
 Assemble_TYPE = WINFUNCTYPE(c_ulong, c_wchar_p, c_ulong, c_char_p, c_ulong, c_int, c_wchar_p)
 Assemble = Assemble_TYPE(resolve_api('Assemble'))
 
+# stdapi (int) Assembleallforms(wchar_t *src,ulong ip,t_asmmod *model,int maxmodel,int mode,wchar_t *errtxt);
+Assembleallforms_TYPE = WINFUNCTYPE(c_int, c_wchar_p, c_ulong, t_asmmod_p, c_int, c_int, c_wchar_p)
+Assembleallforms = Assembleallforms_TYPE(resolve_api('Assembleallforms'))
+
+# stdapi (ulong)   Comparecommand(uchar *cmd,ulong cmdsize,ulong cmdip,t_asmmod *model,int nmodel,int *pa,int *pb,t_disasm *da);
+Comparecommand_TYPE = WINFUNCTYPE(c_ulong, c_char_p, c_ulong, c_ulong, t_asmmod_p, c_int, c_int_p, c_int_p, t_disasm_p)
+Comparecommand = Comparecommand_TYPE(resolve_api('Comparecommand'))
+
 def InsertNameW(addr, type_, s):
     """
     That function is used to add label and comment directly on the disassembly
@@ -74,7 +82,7 @@ def Run(status = STAT_RUNNING, pass_ = 0):
     # required in order to update the state of the thread registers (retrieved with Threadregisters for example)
     # BTW, not sure it's supposed to be done this way though, I've found that in an OllyDBG2 reverse-engineering session.
     while CheckForDebugEvent() == 1:
-        pass
+        print 'debugevent'
 
 def FindMainModule():
     """
@@ -83,7 +91,10 @@ def FindMainModule():
     Check t_module structure definition
     """
     r = Findmainmodule()
-    #XXX: check NULL return
+
+    if IsNullPointer(r):
+        raise Exception("You haven't loaded any executable file")
+
     return r.contents
 
 def CheckForDebugEvent():
@@ -154,3 +165,42 @@ def Assemble_(s, address = 0):
         return (0, 0, error_msg.value)
 
     return (code[:sizeof_assembled], sizeof_assembled, error_msg.value)
+
+def AssembleAllForms(s, ip = 0, ):
+    """
+    Actually, I only use this function to obtain a t_asmod structure, to pass it
+    at CompareCommand()
+    """
+    asmod = t_asmmod()
+
+    # XXX: it should be enough (?)
+    error_msg = (c_wchar * 100)()
+
+    r = Assembleallforms(
+        c_wchar_p(s),
+        ip,
+        pointer(asmod),
+        0x80,
+        7,
+        error_msg
+    )
+
+    if r == 0:
+        raise Exception('Cannot assembled your instruction: %s' % error_msg.value)
+
+    return asmod, r
+
+def CompareCommand(cmd, cmdsize, cmdip, model, nmodel):
+    """
+    Compare command, used to search instruction accross the memory
+    """
+    return Comparecommand(
+        c_char_p(cmd),
+        c_ulong(cmdsize),
+        c_ulong(cmdip),
+        t_asmmod_p(model),
+        c_int(nmodel),
+        cast(c_void_p(0), c_int_p),
+        cast(c_void_p(0), c_int_p),
+        cast(c_void_p(0), t_disasm_p)
+    )

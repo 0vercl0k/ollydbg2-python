@@ -18,8 +18,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import sys
-import os
 from ollyapi import *
 
 def main():
@@ -43,7 +41,7 @@ def main():
     strcmp_address = ResolveApiAddress('msvcrt', 'strcmp')
 
     print 'Located at %#.8x, Lets go!' % strcmp_address
-    bp_goto(strcmp_address)
+    bps_goto(strcmp_address)
 
     print 'Dumping the address of the password on the stack ([ARG2])'
     r = GetCurrentThreadRegisters()

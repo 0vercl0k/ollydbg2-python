@@ -733,3 +733,54 @@ class t_predict(Structure):
     ]
 
 t_predict_p = POINTER(t_predict)
+
+class t_modop(Structure):
+    """
+    Operand in assembler model
+    Size: 17bytes
+    """
+    _pack_ = 1
+    _fields_ = [
+        # Operand features, set of AMP_xxx
+        ('features', c_byte),
+        # (Pseudo)register operand
+        ('reg', c_byte),
+        # Scales of (pseudo)registers in address
+        ('scale', c_byte * NPSEUDO),
+        # Constant or const part of address
+        ('opconst', c_ulong)
+    ]
+
+t_modop_p = POINTER(t_modop)
+
+# Maximal length of valid 80x86 command
+MAXCMDSIZE = 16
+# Maximal allowed number of operands
+NOPERAND = 4
+
+class t_asmmod(Structure):
+    """
+    Description of assembled command
+    Size: 108bytes
+    """
+    _pack_ = 1
+    _fields_ = [
+        # Binary code
+        ('code', c_byte * MAXCMDSIZE),
+        # Mask for binary code (0: bit ignored)
+        ('mask', c_byte * MAXCMDSIZE),
+        # List of prefixes, set of PF_xxx
+        ('prefixes', c_ulong),
+        # Length of code w/o prefixes, bytes
+        ('ncode', c_byte),
+        # Code features, set of AMF_xxx
+        ('features', c_byte),
+        # Postbyte (if AMF_POSTBYTE set)
+        ('postbyte', c_byte),
+        # Number of operands (no pseudooperands)
+        ('nop', c_byte),
+        # Description of operands
+        ('op', t_modop * NOPERAND)
+    ]
+
+t_asmmod_p = POINTER(t_asmmod)

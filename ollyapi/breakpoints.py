@@ -34,7 +34,7 @@ def bps_goto(address):
     Set a software one-shot breakpoint at address, and
     run the process.
     """
-    bp_set(address, OneShotBreakpoint)
+    bps_set(address, OneShotBreakpoint)
     Run()
 
 def bpsc_set(address, cond, bp_type = BP_BREAK | BP_MANUAL):

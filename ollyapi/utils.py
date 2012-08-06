@@ -19,6 +19,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from utils_wrappers import *
+from memory import IsMemoryExists, FindMemory, ReadMemory
 
 def AddUserComment(address, s):
     """
@@ -130,3 +131,128 @@ def Assemble(s, address = 0):
         code += assem
 
     return (code, size)
+
+def FindInstr(instr, address_start):
+    """
+    Find the address of a specific instruction
+    """
+    #XXX: test with instruction eip-dependent: long jump for example
+    if IsMemoryExists(address_start) == False:
+        return 0
+
+    asmmod, nmodel = '', 0
+    # now assembleallforms to get the t_asmmod required to call comparecommand
+    try:
+        asmmod, nmodel = AssembleAllForms(instr, 0)
+    except Exception, e:
+        raise(e)
+
+    size_instr = asmmod.ncode
+
+    # get information about the memory block
+    mem_info = FindMemory(address_start).contents
+
+    # now we can call comparecommand
+    size_to_dump = mem_info.size - (address_start - mem_info.base)
+    offset, found = 0, False
+
+    while offset < size_to_dump and found == False:
+        # XXX: reading outside the boundaries is allowed : s
+        # XXX: maybe its more efficient to read the whole memory block to avoid ReadMemory calls ?
+        code_process = ReadMemory(address_start + offset, 16)
+
+        r = CompareCommand(
+            code_process,
+            16,
+            address_start + offset,
+            asmmod,
+            nmodel
+        )
+
+        # if this is the same command, we found a match \o/
+        if r > 0:
+            found = True
+        else:
+            offset += size_instr
+
+    if found:
+        return address_start + offset
+
+    return 0
+
+def FindHex(s, address_start):
+    """
+    Find hexadecimal values like E9??FF?A??
+    The '?' is a wildcard for one nibbles
+    """
+
+    def hex_matched(data, s):
+        """
+        Validate if s match with data
+        """
+        does_it_matched = True
+        idx_data = 0
+
+        for idx in range(0, len(s), 2):
+            b_str = s[idx : idx+2]
+            byte_to_compare = ord(data[idx_data])
+
+            # have we a wildcard ?
+            if '?' in b_str:
+
+                # wildcard on the high nibble
+                if b_str[0] == '?' and b_str[1] != '?':
+                    low_nibble = (byte_to_compare & 0x0f)
+                    if low_nibble != int(b_str[1], 16):
+                        does_it_matched = False
+
+                # wildcard on the low nibble
+                elif b_str[1] == '?' and b_str[0] != '?':
+                    high_nibble = ((byte_to_compare & 0xf0) >> 4)
+                    if high_nibble != int(b_str[0], 16):
+                        does_it_matched = False
+                # wildcard on the entire byte
+                else:
+                    pass
+    
+            else:
+                b = int(b_str, 16)
+                if b != byte_to_compare:
+                    does_it_matched = False
+            
+            idx_data += 1
+            if does_it_matched == False:
+                break
+        
+        return does_it_matched
+
+    # ensure we have a multiple of 2 digits
+    assert(len(s) % 2 == 0)
+    s = s.lower()
+
+    # we only accept hexa digits and the wildcard '?'
+    assert(filter(lambda c: c in '0123456789abcdef?', s) == s)
+
+    # some memory must be mapped at this address
+    if IsMemoryExists(address_start) == False:
+        return 0
+
+    # get information about the memory block
+    mem_info = FindMemory(address_start).contents
+
+    size_mem_block = mem_info.size - (address_start - mem_info.base)
+    offset, found = 0, False
+    nb_bytes = len(s) / 2
+
+    while offset < (size_mem_block - nb_bytes) and found == False:
+        data = ReadMemory(address_start + offset, nb_bytes)
+        
+        if hex_matched(data, s):
+            found = True
+        else:
+            offset += 1
+
+    if found:
+        return address_start + offset
+
+    return 0

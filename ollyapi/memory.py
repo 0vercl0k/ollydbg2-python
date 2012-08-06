@@ -25,6 +25,9 @@ from struct import unpack as u
 def ResolveApiAddress(module, function):
     """
     Get the address of a specific API exported by a specific module thanks to their names
+
+    Note:
+        - you can use '<ModuleEntryPoint>' as a function name to resolve the entry point of a specific module
     """
     r = t_result()
     ret = Expression(
@@ -50,3 +53,9 @@ def ReadDwordMemory(address):
     """
     data = ReadMemory(address, 4)
     return u('<I', data)[0]
+
+def IsMemoryExists(address):
+    """
+    Is the memory page exists in the process ?
+    """
+    return IsNullPointer(FindMemory(address)) == False

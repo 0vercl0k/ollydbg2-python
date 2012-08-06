@@ -21,6 +21,7 @@
 from ctypes import *
 
 kernel32 = windll.kernel32
+c_int_p = POINTER(c_int)
 
 # XXX: not present on XP :o
 wcsncpy_s = cdll.msvcrt.wcsncpy_s
@@ -33,6 +34,12 @@ MAXPATH = 260
 # Number of registers (of any type)
 NREG = 8
 
+# Max length of short or module name
+SHORTNAME = 32
+
+# Total count of resisters & pseudoregs
+NPSEUDO = (NREG+3)
+
 def resolve_api(n):
     """
     Retrieve dynamically the function address exported
@@ -44,3 +51,9 @@ def resolve_api(n):
     )
     assert(addr != 0)
     return addr
+
+def IsNullPointer(p):
+    """
+    Check if a ctypes structure pointer is null or not
+    """
+    return bool(p) == False

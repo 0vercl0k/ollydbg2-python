@@ -38,6 +38,10 @@ Expression_ = Expression_TYPE(resolve_api('Expression'))
 Flushmemorycache_TYPE = WINFUNCTYPE(None)
 Flushmemorycache = Flushmemorycache_TYPE(resolve_api('Flushmemorycache'))
 
+# stdapi (t_memory *) Findmemory(ulong addr);
+Findmemory_TYPE = WINFUNCTYPE(t_memory_p, c_ulong)
+Findmemory = Findmemory_TYPE(resolve_api('Findmemory'))
+
 def FlushMemoryCache():
     """
     Flush the intern memory cache of OllyDBG2
@@ -95,3 +99,9 @@ def Expression(result, expression, data, base, size, threadid, a, b, mode):
         return None
 
     return r
+
+def FindMemory(addr):
+    """
+    Find a structure t_memory describing the memory addr points to
+    """
+    return Findmemory(addr)

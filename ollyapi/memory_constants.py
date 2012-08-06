@@ -68,3 +68,36 @@ class t_result(Structure):
     ]
 
 t_result_p = POINTER(t_result)
+
+class t_memory(Structure):
+    """
+    Descriptor of memory block
+    Size: 104bytes
+    """
+    _pack_ = 1
+    _fields_ = [
+        # Base address of memory block
+        ('base', c_ulong),
+        # Size of memory block
+        ('size', c_ulong),
+        # Service information, TY_xxx+MEM_xxx
+        ('type', c_ulong),
+        # Extension of type, one of MSP_xxx
+        ('special', c_int),
+        # Address of owner of the memory
+        ('owner', c_ulong),
+        # Initial read/write access
+        ('initaccess', c_ulong),
+        # Actual status and read/write access
+        ('access', c_ulong),
+        # Block belongs to this thread or 0
+        ('threadid', c_ulong),
+        # Null-terminated section name
+        ('sectname', c_wchar * SHORTNAME),
+        # Copy used in CPU window or NULL
+        ('copy', c_char_p),
+        # Decoding information or NULL
+        ('decode', c_char_p)
+    ]
+
+t_memory_p = POINTER(t_memory)
