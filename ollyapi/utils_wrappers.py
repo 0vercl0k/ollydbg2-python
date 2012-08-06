@@ -82,7 +82,7 @@ def Run(status = STAT_RUNNING, pass_ = 0):
     # required in order to update the state of the thread registers (retrieved with Threadregisters for example)
     # BTW, not sure it's supposed to be done this way though, I've found that in an OllyDBG2 reverse-engineering session.
     while CheckForDebugEvent() == 1:
-        print 'debugevent'
+        pass
 
 def FindMainModule():
     """

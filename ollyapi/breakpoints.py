@@ -114,3 +114,11 @@ def bphc_set(address, type_, condi, size = 1, slot = 0):
         slot,
         condi
     )
+
+def bph_goto(addr):
+    """
+    A goto using hardware breakpoint
+    """
+    bph_set(addr, 'x')
+    Run()
+    # XXX: remove the hwbp
