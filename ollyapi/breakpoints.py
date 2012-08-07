@@ -19,8 +19,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from breakpoints_wrappers import *
-from utils_wrappers import CheckForDebugEvent
-from utils import Run
+from utils_wrappers import Run
 
 def bps_set(address, bp_type = BP_BREAK | BP_MANUAL):
     """

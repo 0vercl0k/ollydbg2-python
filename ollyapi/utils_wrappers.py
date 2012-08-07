@@ -22,6 +22,7 @@ from ctypes import *
 from common import *
 from utils_constants import *
 from threads_constants import t_reg_p, t_reg
+from memory_wrappers import FlushMemoryCache
 
 # stdapi (int) InsertnameW(ulong addr,int type,wchar_t *s);
 InsertnameW_TYPE = WINFUNCTYPE(c_int, c_ulong, c_int, c_wchar_p)
@@ -82,7 +83,7 @@ def Run(status = STAT_RUNNING, pass_ = 0):
     # required in order to update the state of the thread registers (retrieved with Threadregisters for example)
     # BTW, not sure it's supposed to be done this way though, I've found that in an OllyDBG2 reverse-engineering session.
     while CheckForDebugEvent() == 1:
-        pass
+        FlushMemoryCache()    
 
 def FindMainModule():
     """
@@ -166,12 +167,13 @@ def Assemble_(s, address = 0):
 
     return (code[:sizeof_assembled], sizeof_assembled, error_msg.value)
 
-def AssembleAllForms(s, ip = 0, ):
+def AssembleAllForms(s, ip = 0):
     """
     Actually, I only use this function to obtain a t_asmod structure, to pass it
     at CompareCommand()
     """
-    asmod = t_asmmod()
+    maxmodel = 0x80
+    asmod = (t_asmmod * maxmodel)()
 
     # XXX: it should be enough (?)
     error_msg = (c_wchar * 100)()
@@ -179,8 +181,8 @@ def AssembleAllForms(s, ip = 0, ):
     r = Assembleallforms(
         c_wchar_p(s),
         ip,
-        pointer(asmod),
-        0x80,
+        cast(asmod, t_asmmod_p), # XXX: if you know a proper way, tell me!
+        maxmodel,
         7,
         error_msg
     )
@@ -194,13 +196,16 @@ def CompareCommand(cmd, cmdsize, cmdip, model, nmodel):
     """
     Compare command, used to search instruction accross the memory
     """
+    dis = t_disasm()
+    i1, i2 = c_int(), c_int()
+
     return Comparecommand(
         c_char_p(cmd),
         c_ulong(cmdsize),
         c_ulong(cmdip),
-        t_asmmod_p(model),
+        cast(model, t_asmmod_p), # XXX: remember in AssembleAllForm we have an array of t_asmmod
         c_int(nmodel),
-        cast(c_void_p(0), c_int_p),
-        cast(c_void_p(0), c_int_p),
-        cast(c_void_p(0), t_disasm_p)
+        c_int_p(i1),
+        c_int_p(i2),
+        t_disasm_p(dis)
     )

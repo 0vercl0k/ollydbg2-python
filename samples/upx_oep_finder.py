@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-#    goto_oep_uox.py - A very simple script to find the original entry point of an executable upx-ed
+#    upx_oep_finder.py - A very simple script to find the original entry point of an executable upx-ed
 #    Copyright (C) 2012 Axel "0vercl0k" Souchet - http://www.twitter.com/0vercl0k
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -22,13 +22,15 @@ from ollyapi import *
 
 def main():
     print 'Looking for the popad instruction..'
-    addr = FindInstr('popad', 0x040F210)
+    addr = FindInstr('popad', GetEip())
+    assert(addr != 0)
 
     print 'Found at %#.8x, goto this address!' % addr
     bph_goto(addr)
 
     print 'Now, looking for the JMP OEP..'
-    addr = FindHex('E9????????',  0x0040F385)
+    addr = FindHex('E9????????',  GetEip())
+    assert(addr != 0)
 
     print 'Found at %#.8x, goto this address!' % addr
     bps_goto(addr)

@@ -136,18 +136,16 @@ def FindInstr(instr, address_start):
     """
     Find the address of a specific instruction
     """
-    #XXX: test with instruction eip-dependent: long jump for example
     if IsMemoryExists(address_start) == False:
         return 0
 
-    asmmod, nmodel = '', 0
     # now assembleallforms to get the t_asmmod required to call comparecommand
+    asmmod, nmodel = '', 0
     try:
+        #XXX: fix the ip parameter to be able of finding eip-dependent instruction
         asmmod, nmodel = AssembleAllForms(instr, 0)
     except Exception, e:
         raise(e)
-
-    size_instr = asmmod.ncode
 
     # get information about the memory block
     mem_info = FindMemory(address_start).contents
@@ -157,13 +155,18 @@ def FindInstr(instr, address_start):
     offset, found = 0, False
 
     while offset < size_to_dump and found == False:
-        # XXX: reading outside the boundaries is allowed : s
         # XXX: maybe its more efficient to read the whole memory block to avoid ReadMemory calls ?
-        code_process = ReadMemory(address_start + offset, 16)
+        size_to_read = 16
+
+        # we'll go outside of the boundaries
+        if (offset + size_to_read) >= size_to_dump:
+            size_to_read = size_to_dump - offset
+
+        code_process = ReadMemory(address_start + offset, size_to_read)
 
         r = CompareCommand(
             code_process,
-            16,
+            size_to_read,
             address_start + offset,
             asmmod,
             nmodel
@@ -173,7 +176,7 @@ def FindInstr(instr, address_start):
         if r > 0:
             found = True
         else:
-            offset += size_instr
+            offset += 1
 
     if found:
         return address_start + offset
