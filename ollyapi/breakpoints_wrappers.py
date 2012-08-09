@@ -30,6 +30,10 @@ Setint3breakpoint = Setint3breakpoint_TYPE(resolve_api('Setint3breakpoint'))
 Sethardbreakpoint_TYPE = WINFUNCTYPE(c_int, c_int, c_ulong, c_ulong, c_int, c_ulong, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
 Sethardbreakpoint = Sethardbreakpoint_TYPE(resolve_api('Sethardbreakpoint'))
 
+# stdapi (int) Removeint3breakpoint(ulong addr,ulong type);
+Removeint3breakpoint_TYPE = WINFUNCTYPE(c_int, c_ulong, c_ulong)
+Removeint3breakpoint = Removeint3breakpoint_TYPE(resolve_api('Removeint3breakpoint'))
+
 def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):
     """
     Python wrapper for the Setint3breakpoint function
@@ -60,4 +64,13 @@ def SetHardBreakpoint(address, index = 0, size = 0, type_ = 0, fnindex = 0, limi
         c_wchar_p(condition),
         c_wchar_p(expression),
         c_wchar_p(exprtype)
+    )
+
+def RemoveInt3Breakpoint(address, type_bp):
+    """
+    Remove software breakpoint
+    """
+    return Removeint3breakpoint(
+        c_ulong(address),
+        c_ulong(type_bp)
     )

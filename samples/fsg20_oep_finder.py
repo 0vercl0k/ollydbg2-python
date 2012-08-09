@@ -26,12 +26,16 @@ def main():
     assert(addr != 0)
 
     print 'Found at %#.8x, goto this address!' % addr
-    bps_goto(addr)
+    bp = SoftwareBreakpoint(addr)
+    bp.goto()
 
     print 'Final move, step to the OEP'
     StepInto()
 
     print 'You are at the OEP bro.'
+    AddUserLabel(GetEip(), 'OriginalEntryPoint')
+    AddUserComment(GetEip(), 'This is the original entry point.')
+    bp.remove()
     return 1
 
 if __name__ == '__main__':

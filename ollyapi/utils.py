@@ -186,7 +186,7 @@ def FindInstr(instr, address_start):
 def FindHex(s, address_start):
     """
     Find hexadecimal values like E9??FF?A??
-    The '?' is a wildcard for one nibbles
+    The '?' is a wildcard for one nibbles ; that idea comes from the excellent ODBG scripting language
     """
 
     def hex_matched(data, s):

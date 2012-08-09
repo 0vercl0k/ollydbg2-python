@@ -20,6 +20,7 @@
 #
 from breakpoints_wrappers import *
 from utils_wrappers import Run
+from threads_wrappers import GetEip
 
 def bps_set(address, bp_type = BP_BREAK | BP_MANUAL):
     """
@@ -121,3 +122,90 @@ def bph_goto(addr):
     bph_set(addr, 'x')
     Run()
     # XXX: remove the hwbp
+
+# WE NEED ABSTRACTION MAN
+
+class Breakpoint(object):
+    """
+    """
+    def __init__(self, address, type_bp, condition = None):
+        self.address = address
+        self.state = 'Disabled'
+        self.type = type_bp
+        self.is_conditional_bp = condition != None
+        self.condition = '' if condition == None else condition
+
+    def get_state(self):
+        """
+        Get the state of your breakpoint
+        """
+        return self.state
+
+    def is_enabled(self):
+        """
+        Is the breakpoint enabled ?
+        """
+        return self.state == 'Enabled'
+
+    def is_disabled(self):
+        """
+        Is the breakpoint disabled ?
+        """
+        return self.state == 'Disabled'
+
+    def disable(self):
+        """
+        Disable the breakpoint
+        """
+        pass
+
+    def remove(self):
+        """
+        Remove the breakpoint
+        """
+        pass
+
+    def enable(self):
+        """
+        Enable the breakpoint
+        """
+        pass
+
+    def goto(self):
+        """
+        Run the executable until we reach our breakpoint
+        """
+        while GetEip() != self.address:
+            Run()
+
+class SoftwareBreakpoint(Breakpoint):
+    """
+    A class to manipulate, play with software breakpoint
+
+    TODO:
+        - disable / remove
+        - goto breakpoints
+        - .continue(x) -> let the breakpoint be hit x times
+    """
+    def __init__(self, address, condition = None):
+        # init internal state of the breakpoint
+        super(SoftwareBreakpoint, self).__init__(address, BP_BREAK | BP_MANUAL, condition)
+
+        # enable directly the software breakpoint
+        self.enable()
+
+    def enable(self):
+        if self.is_conditional_bp:
+            bpsc_set(self.address, self.condition, self.type)
+        else:
+            bps_set(self.address, self.type)
+
+        self.state = 'Enabled'
+
+    def disable(self):
+        pass
+
+    def remove(self):
+        # we remove the breakpoint only if it is enabled
+        if self.state == 'Enabled':
+            RemoveInt3Breakpoint(self.address, self.type)
