@@ -49,46 +49,46 @@ def bpsc_set(address, cond, bp_type = BP_BREAK | BP_MANUAL):
         condition = cond
     )
 
-# XXX: not very elegant
-next_index_hardware_breakpoint = 0
-
-def bph_set(address, type_, size = 1, slot = 0, condi = ''):
+def flags_to_hardwarebp_type(flags, is_conditional_bp = False):
     """
-    Set a hardware breakpoint
+    Translate the flags 'rwx' in the proper hardware breakpoint types
+    used internaly by OllyDbg
     """
-    global next_index_hardware_breakpoint
-
-    assert(size in [1, 2, 4])
-    assert(slot in [0, 1, 2, 3])
-    assert(type_ in ['r', 'rw', 'w', 'wr', 'x'])
+    assert(flags in ['rw', 'w', 'wr', 'x'])
 
     # converting the flags into valid breakpoint type
     type_dword = BP_MANUAL | BP_BREAK
-    if 'r' in type_:
+    if 'r' in flags:
         type_dword |= BP_READ
 
-    if 'w' in type_:
+    if 'w' in flags:
         type_dword |= BP_WRITE
 
-    if 'x' in type_:
+    if 'x' in flags:
         type_dword |= BP_EXEC
 
-    if condi != '':
+    if is_conditional_bp != '':
         type_dword |= BP_COND
 
     # ensure the size is 1byte if this is an execution breakpoint
     if type_dword == ExecutionBreakpoint or type_dword == ExecutionBreakpoint | BP_COND:
         size = 1
 
-    # if we have used all the hwbp slot, wrap to 0
-    if next_index_hardware_breakpoint == 4:
-        next_index_hardware_breakpoint = 0
+    return type_dword
+
+def bph_set(address, flags, size = 1, slot = 0, condi = ''):
+    """
+    Set a hardware breakpoint
+    """
+
+    assert(size in [1, 2, 4])
+    assert(slot in [0, 1, 2, 3])
 
     r = SetHardBreakpoint(
         address,
-        next_index_hardware_breakpoint,
+        slot,
         size,
-        type_dword,
+        flags_to_hardwarebp_type(flags, condi != ''),
         0,
         0,
         0,
@@ -97,31 +97,19 @@ def bph_set(address, type_, size = 1, slot = 0, condi = ''):
         ''
     )
 
-    # the next one will be set at the slot n+1 (only if there wasn't any error)
-    if r != -1:
-        next_index_hardware_breakpoint += 1
-
     return r
 
-def bphc_set(address, type_, condi, size = 1, slot = 0):
+def bphc_set(address, flags, condi, size = 1, slot = 0):
     """
     Set a conditional hardware breakpoint
     """
     return bph_set(
         address,
-        type_,
+        flags,
         size,
         slot,
         condi
     )
-
-def bph_goto(addr):
-    """
-    A goto using hardware breakpoint
-    """
-    bph_set(addr, 'x')
-    Run()
-    # XXX: remove the hwbp
 
 # WE NEED ABSTRACTION MAN
 
@@ -183,8 +171,7 @@ class SoftwareBreakpoint(Breakpoint):
     A class to manipulate, play with software breakpoint
 
     TODO:
-        - disable / remove
-        - goto breakpoints
+        - disable
         - .continue(x) -> let the breakpoint be hit x times
     """
     def __init__(self, address, condition = None):
@@ -209,3 +196,39 @@ class SoftwareBreakpoint(Breakpoint):
         # we remove the breakpoint only if it is enabled
         if self.state == 'Enabled':
             RemoveInt3Breakpoint(self.address, self.type)
+            self.state = 'Disabled'
+
+class HardwareBreakpoint(Breakpoint):
+    """
+    A class to manipulate, play with hardware breakpoint
+    """
+    def __init__(self, address, flags = 'x', size = 1, slot = None, condition = None):
+        # init internal state of the breakpoint
+        super(HardwareBreakpoint, self).__init__(address, flags, condition)
+
+        # keep in memory the flags view like 'rw' breakpoint, but translate it into something
+        # ollydbg understands
+        self.internal_type = flags_to_hardwarebp_type(self.type, self.is_conditional_bp)
+
+        self.size = size
+        self.slot = slot if slot != None else FindFreeHardbreakSlot(self.internal_type)
+        if self.slot == -1:
+            raise Exception('You have used all the available slot')
+        
+        self.enable()
+
+    def enable(self):
+        if self.is_conditional_bp:
+            bphc_set(self.address, self.type, self.condition, self.size, self.slot)
+        else:
+            bph_set(self.address, self.type, self.size, self.slot)
+
+        self.state = 'Enabled'
+
+    def disable(self):
+        pass
+
+    def remove(self):
+        if self.state == 'Enabled':
+            RemoveHardbreapoint(self.slot)
+            self.state = 'Disabled'

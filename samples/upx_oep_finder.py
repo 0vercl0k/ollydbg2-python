@@ -26,23 +26,23 @@ def main():
     assert(addr != 0)
 
     print 'Found at %#.8x, goto this address!' % addr
-    bp_popad = SoftwareBreakpoint(addr)
+    bp_popad = HardwareBreakpoint(addr) # yeah, hardware breakpoints work too!
     bp_popad.goto()
+    bp_popad.remove()
 
     print 'Now, looking for the JMP OEP..'
-    bp_popad.remove()
     addr = FindHex('E9????????',  GetEip())
     assert(addr != 0)
 
     print 'Found at %#.8x, goto this address!' % addr
     bp_jmp = SoftwareBreakpoint(addr)
     bp_jmp.goto()
+    bp_jmp.remove()
 
     print 'Final move, step to the OEP'
     StepInto()
 
     print 'You are at the OEP bro.'
-    bp_jmp.remove()
     AddUserLabel(GetEip(), 'OriginalEntryPoint')
     AddUserComment(GetEip(), 'This is the original entry point.')
     return 1

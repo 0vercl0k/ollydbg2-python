@@ -20,6 +20,8 @@
 #
 from ollyapi import *
 
+# XXX: make the page of the PE header rx if you have EMET installed
+
 def main():
     print 'Looking for the jmp [ebx+c] instruction..'
     addr = FindInstr('jmp dword [ebx + 0xC]', GetEip())
@@ -28,6 +30,7 @@ def main():
     print 'Found at %#.8x, goto this address!' % addr
     bp = SoftwareBreakpoint(addr)
     bp.goto()
+    bp.remove()
 
     print 'Final move, step to the OEP'
     StepInto()
@@ -35,7 +38,6 @@ def main():
     print 'You are at the OEP bro.'
     AddUserLabel(GetEip(), 'OriginalEntryPoint')
     AddUserComment(GetEip(), 'This is the original entry point.')
-    bp.remove()
     return 1
 
 if __name__ == '__main__':

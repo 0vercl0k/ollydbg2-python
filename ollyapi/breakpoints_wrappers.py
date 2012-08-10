@@ -34,6 +34,14 @@ Sethardbreakpoint = Sethardbreakpoint_TYPE(resolve_api('Sethardbreakpoint'))
 Removeint3breakpoint_TYPE = WINFUNCTYPE(c_int, c_ulong, c_ulong)
 Removeint3breakpoint = Removeint3breakpoint_TYPE(resolve_api('Removeint3breakpoint'))
 
+# stdapi (int) Removehardbreakpoint(int index);
+Removehardbreakpoint_TYPE = WINFUNCTYPE(c_int, c_int)
+Removehardbreakpoint = Removehardbreakpoint_TYPE(resolve_api('Removehardbreakpoint'))
+
+# stdapi (int) Findfreehardbreakslot(ulong type);
+Findfreehardbreakslot_TYPE = WINFUNCTYPE(c_int, c_ulong)
+Findfreehardbreakslot = Findfreehardbreakslot_TYPE(resolve_api('Findfreehardbreakslot'))
+
 def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):
     """
     Python wrapper for the Setint3breakpoint function
@@ -74,3 +82,15 @@ def RemoveInt3Breakpoint(address, type_bp):
         c_ulong(address),
         c_ulong(type_bp)
     )
+
+def RemoveHardbreapoint(slot):
+    """
+    Remove hardware breakpoint
+    """
+    return Removehardbreakpoint(c_int(slot))
+
+def FindFreeHardbreakSlot(type_):
+    """
+    Find a free slot to put your hardware breakpoint
+    """
+    return Findfreehardbreakslot(c_ulong(type_))
