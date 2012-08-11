@@ -33,6 +33,9 @@ BP_ONESHOT = 0x00002000
 # Conditional breakpoint
 BP_COND = 0x00040000
 
+# Pause if condition is true
+BP_CONDBREAK = 0x01000000
+
 # INT3 breakpoints types
 # Breakpoint who paused the process when it is reached, and disable it after: One Shot
 OneShotBreakpoint = BP_ONESHOT | BP_BREAK

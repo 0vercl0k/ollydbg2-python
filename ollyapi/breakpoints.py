@@ -37,7 +37,7 @@ def bps_goto(address):
     bps_set(address, OneShotBreakpoint)
     Run()
 
-def bpsc_set(address, cond, bp_type = BP_BREAK | BP_MANUAL):
+def bpsc_set(address, cond, bp_type = BP_MANUAL):
     """
     Set a software conditional breakpoint
 
@@ -45,7 +45,7 @@ def bpsc_set(address, cond, bp_type = BP_BREAK | BP_MANUAL):
     """
     return SetInt3Breakpoint(
         address,
-        bp_type | BP_COND,
+        bp_type | BP_CONDBREAK | BP_COND,
         condition = cond
     )
 
@@ -175,8 +175,11 @@ class SoftwareBreakpoint(Breakpoint):
         - .continue(x) -> let the breakpoint be hit x times
     """
     def __init__(self, address, condition = None):
+        # if this is a classic breakpoint we need to set different flag
+        t = BP_MANUAL | ((BP_COND | BP_CONDBREAK) if condition != None else BP_BREAK)
+
         # init internal state of the breakpoint
-        super(SoftwareBreakpoint, self).__init__(address, BP_BREAK | BP_MANUAL, condition)
+        super(SoftwareBreakpoint, self).__init__(address, t, condition)
 
         # enable directly the software breakpoint
         self.enable()
@@ -189,9 +192,6 @@ class SoftwareBreakpoint(Breakpoint):
 
         self.state = 'Enabled'
 
-    def disable(self):
-        pass
-
     def remove(self):
         # we remove the breakpoint only if it is enabled
         if self.state == 'Enabled':
@@ -201,6 +201,10 @@ class SoftwareBreakpoint(Breakpoint):
 class HardwareBreakpoint(Breakpoint):
     """
     A class to manipulate, play with hardware breakpoint
+
+    Note:
+        - do not use .goto() if you have a read/write bp, because you don't know where
+        the breakpoint is going to be hit
     """
     def __init__(self, address, flags = 'x', size = 1, slot = None, condition = None):
         # init internal state of the breakpoint
@@ -224,9 +228,6 @@ class HardwareBreakpoint(Breakpoint):
             bph_set(self.address, self.type, self.size, self.slot)
 
         self.state = 'Enabled'
-
-    def disable(self):
-        pass
 
     def remove(self):
         if self.state == 'Enabled':

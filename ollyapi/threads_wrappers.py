@@ -112,9 +112,31 @@ def SetEip(eip = 0):
     p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
     p_reg[0].ip = eip
 
-def GetEip(eip = 0):
+
+def GetEip():
     """
     Get the EIP register
     """
     p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
     return p_reg[0].ip
+
+def GetEsp():
+    """
+    Get the ESP register
+    """
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    return p_reg[0].r[REG_ESP]
+
+def GetEdi():
+    """
+    Get the EDI register
+    """
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    return p_reg[0].r[REG_EDI]
+
+def GetEax():
+    """
+    Get the EAX register
+    """
+    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+    return p_reg[0].r[REG_EAX]
