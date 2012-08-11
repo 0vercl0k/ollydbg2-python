@@ -49,62 +49,7 @@ def GetCpuThreadId():
     """
     return Getcputhreadid()
 
-def SetEax(eax = 0):
-    """
-    Modify the EAX register
-    """
-    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
-    p_reg[0].r[REG_EAX] = eax
-
-def SetEbx(ebx = 0):
-    """
-    Modify the EBX register
-    """
-    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
-    p_reg[0].r[REG_EBX] = ebx
-
-def SetEcx(ecx = 0):
-    """
-    Modify the ECX register
-    """
-    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
-    p_reg[0].r[REG_ECX] = ecx
-
-def SetEdx(edx = 0):
-    """
-    Modify the EDX register
-    """
-    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
-    p_reg[0].r[REG_EDX] = edx
-
-def SetEsi(esi = 0):
-    """
-    Modify the ESI register
-    """
-    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
-    p_reg[0].r[REG_ESI] = esi
-
-def SetEdi(edi = 0):
-    """
-    Modify the EDI register
-    """
-    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
-    p_reg[0].r[REG_EDI] = edi
-
-def SetEsp(esp = 0):
-    """
-    Modify the ESP register
-    """
-    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
-    p_reg[0].r[REG_ESP] = esp
-
-def SetEbp(ebp = 0):
-    """
-    Modify the EBP register
-    """
-    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
-    p_reg[0].r[REG_EBP] = ebp
-
+# The metaprogramming trick doesn't work because the ip field isn't in the t_reg.r array :(
 def SetEip(eip = 0):
     """
     Modify the EIP register
@@ -120,23 +65,62 @@ def GetEip():
     p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
     return p_reg[0].ip
 
-def GetEsp():
-    """
-    Get the ESP register
-    """
-    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
-    return p_reg[0].r[REG_ESP]
+# metaprogramming magixx
 
-def GetEdi():
+def CreateRegisterSetter(reg_id, reg_name):
     """
-    Get the EDI register
+    Create dynamically a setter function for an x86 register contained in t_reg.r
     """
-    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
-    return p_reg[0].r[REG_EDI]
+    def template_func(reg_value):
+        p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+        p_reg[0].r[reg_id] = reg_value
 
-def GetEax():
+    f = template_func
+    # adjust correctly the name of the futur function
+    f.__name__ = 'Set%s' % reg_name.capitalize()
+    f.__doc__  = 'Set the %s register' % reg_name.upper()
+
+    return (f.__name__, f)
+
+def CreateRegisterGetter(reg_id, reg_name):
     """
-    Get the EAX register
+    Create dynamically a getter function for an x86 register contained in t_reg.r
     """
-    p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
-    return p_reg[0].r[REG_EAX]
+    def template_func():
+        p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
+        return p_reg[0].r[reg_id]
+
+    f = template_func
+    # adjust correctly the name of the futur function
+    f.__name__ = 'Get%s' % reg_name.capitalize()
+    f.__doc__  = 'Get the %s register' % reg_name.upper()
+
+    return (f.__name__, f)
+
+def BuildSettersGetters():
+    """
+    Create dynamically all the getters/setters function used to retrieve/set register value in
+    t_reg.r
+    """
+    list_reg = [
+        ('eax', REG_EAX),
+        ('ecx', REG_ECX),
+        ('edx', REG_EDX),
+        ('ebx', REG_EBX),
+        ('esp', REG_ESP),
+        ('ebp', REG_EBP),
+        ('esi', REG_ESI),
+        ('edi', REG_EDI)
+    ]
+
+    for reg_name, reg_id in list_reg:
+        # Build the setter
+        n, f = CreateRegisterSetter(reg_id, reg_name)
+        globals()[n] = f
+
+        # Build the getter
+        n, f = CreateRegisterGetter(reg_id, reg_name)
+        globals()[n] = f
+
+# it's a bit magic, instanciation of the functions!
+BuildSettersGetters()
