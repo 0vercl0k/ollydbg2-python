@@ -19,7 +19,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from utils_wrappers import *
-from memory import IsMemoryExists, FindMemory, ReadMemory
+# from memory import IsMemoryExists
+from memory_wrappers import FindMemory, ReadMemory
 
 def AddUserComment(address, s):
     """

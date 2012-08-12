@@ -63,8 +63,15 @@ def main():
     for i in range(3):
         StepInto()
 
-    print "Yeah you're on the good-boy branch, I guess it's done, hope you enjoyed it!"
-    # CloseProcess()
+    print "Yeah you're on the good-boy branch, time to hijack the content displayed!"
+    print 'Writing at 0x00402070 a new string..'
+    WriteMemory(0x00402070, 'hijacked printf!\x00')
+
+    print 'Patching the code at EIP to place our address on the stack correctly..'
+    PatchCode(GetEip(), 'mov dword [esp], 0x00402070')
+
+    ExecuteUntilRet()
+    print "I guess it's done, hope you enjoyed it!"
     return 1
 
 if __name__ == '__main__':

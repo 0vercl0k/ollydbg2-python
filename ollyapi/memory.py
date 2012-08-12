@@ -20,7 +20,9 @@
 #
 from memory_wrappers import *
 from threads_wrappers import GetCpuThreadId
+from utils import Assemble
 from struct import unpack as u
+from binascii import unhexlify
 
 def ResolveApiAddress(module, function):
     """
@@ -59,3 +61,29 @@ def IsMemoryExists(address):
     Is the memory page exists in the process ?
     """
     return IsNullPointer(FindMemory(address)) == False
+
+def PatchCodeWithHex(address, s):
+    """
+    Patch the code at address with unhexlify(s)
+    """
+    bin = ''
+    try:
+        bin = unhexlify(s)
+    except:
+        raise Exception('You must supply a string composed exclusively of hex symbols')
+
+    # patch the code
+    WriteMemory(address, bin)
+
+def PatchCode(address, s):
+    """
+    Assemble s and patch address
+    """
+    bin = ''
+    try:
+        bin, s = Assemble(s)
+    except Exception, e:
+        raise(e)
+
+    # patch the code
+    WriteMemory(address, bin)

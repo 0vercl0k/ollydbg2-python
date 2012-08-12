@@ -23,8 +23,8 @@ from ctypes import *
 kernel32 = windll.kernel32
 c_int_p = POINTER(c_int)
 
-# XXX: not present on XP :o
-wcsncpy_s = cdll.msvcrt.wcsncpy_s
+wcsncpy = cdll.msvcrt.wcsncpy
+memset  = cdll.msvcrt.memset
 
 # Max length of text string incl. '\0'
 TEXTLEN = 256

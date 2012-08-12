@@ -116,8 +116,9 @@ def SetArguments(s):
     Set the cmdline passed to the debuggee, exactly the same when you do "File > Set new arguments"
     """
     # XXX: maybe check if a process is loaded ?
-    wcsncpy_s(c_wchar_p(_arguments), c_int(ARGLEN), c_wchar_p(s), c_int((ARGLEN - 1)))
-
+    memset(c_void_p(_arguments), 0, ARGLEN * sizeof(c_wchar))
+    wcsncpy(c_wchar_p(_arguments), c_wchar_p(s), ARGLEN - 1)
+    
 def Disasm_(c, address = 0):
     """
     Disassemble some x86 code thanks to the OllyDbg2 engine
