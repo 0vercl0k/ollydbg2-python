@@ -20,7 +20,6 @@
 #
 from ctypes import *
 from common import *
-from breakpoints_constants import *
 
 # stdapi (int) Setint3breakpoint(ulong addr, ulong type, int fnindex, int limit, int count, wchar_t *condition, wchar_t *expression, wchar_t *exprtype);
 Setint3breakpoint_TYPE = WINFUNCTYPE(c_int, c_ulong, c_ulong, c_int, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)

@@ -22,7 +22,7 @@ from ollyapi import *
 
 def main():
     print 'Looking for the popad instruction..'
-    addr = FindInstr('popad', GetEip())
+    addr = FindInstr('popad')
     assert(addr != 0)
 
     print 'Found at %#.8x, goto this address!' % addr
@@ -31,7 +31,7 @@ def main():
     bp_popad.remove()
 
     print 'Now, looking for the JMP OEP..'
-    addr = FindHex('E9????????',  GetEip())
+    addr = FindHex('E9????????')
     assert(addr != 0)
 
     print 'Found at %#.8x, goto this address!' % addr

@@ -64,7 +64,7 @@ def main():
 
     print "Yeah you're on the good-boy branch, time to hijack the content displayed!"
     print 'Writing at 0x00402070 a new string..'
-    WriteMemory(0x00402070, 'hijacked printf!\x00')
+    WriteMemory('hijacked printf!\x00', 0x00402070)
 
     print 'Patching the code at EIP to place our address on the stack correctly..'
     PatchCode('mov dword [esp], 0x00402070')

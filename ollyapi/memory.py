@@ -19,7 +19,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from memory_wrappers import *
-from threads_wrappers import GetCpuThreadId
+import threads
+import common
+import utils
+
 from struct import unpack as u
 from binascii import unhexlify
 
@@ -37,7 +40,7 @@ def ResolveApiAddress(module, function):
         0,
         0,
         0,
-        GetCpuThreadId(),
+        threads.GetCpuThreadId(),
         0,
         0,
         0
@@ -53,7 +56,7 @@ def ReadDwordMemory(address = None):
     Read a dword in memory
     """
     if address == None:
-        address = GetEip()
+        address = threads.GetEip()
 
     data = ReadMemory(4, address)
     return u('<I', data)[0]
@@ -62,7 +65,7 @@ def IsMemoryExists(address):
     """
     Is the memory page exists in the process ?
     """
-    return IsNullPointer(FindMemory(address)) == False
+    return common.IsNullPointer(FindMemory(address)) == False
 
 def PatchCodeWithHex(s, address = None):
     """
@@ -70,7 +73,7 @@ def PatchCodeWithHex(s, address = None):
     """
     # XXX: test if the memory exists
     if address == None:
-        address = GetEip()
+        address = threads.GetEip()
 
     bin = ''
     try:
@@ -85,18 +88,16 @@ def PatchCode(s, address = None):
     """
     Assemble s and patch address
     """
-    # XXX: fix import problem, it's really a nightmare currently
-    from utils import Assemble
 
     # XXX: test if the memory exists
     if address == None:
-        address = GetEip()
-
+        address = threads.GetEip()
+    print 'patching @ %#.8x' % address
     bin = ''
     try:
-        bin, s = Assemble(s)
+        bin, s = utils.Assemble(s)
     except Exception, e:
         raise(e)
 
     # patch the code
-    WriteMemory(address, bin)
+    WriteMemory(bin, address)

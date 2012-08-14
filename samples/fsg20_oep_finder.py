@@ -24,7 +24,7 @@ from ollyapi import *
 
 def main():
     print 'Looking for the jmp [ebx+c] instruction..'
-    addr = FindInstr('jmp dword [ebx + 0xC]', GetEip())
+    addr = FindInstr('jmp dword [ebx + 0xC]')
     assert(addr != 0)
 
     print 'Found at %#.8x, goto this address!' % addr

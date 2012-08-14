@@ -21,7 +21,7 @@
 from ctypes import *
 from common import *
 from memory_constants import *
-from threads_wrappers import GetEip
+import threads
 
 # stdapi (ulong) Readmemory(void *buf,ulong addr,ulong size,int mode);
 Readmemory_TYPE = WINFUNCTYPE(c_ulong, c_void_p, c_ulong, c_ulong, c_int)
@@ -49,10 +49,15 @@ def FlushMemoryCache():
     """
     Flushmemorycache()
 
-def WriteMemory(addr, buff, mode = 0):
+def WriteMemory(buff, addr = None, mode = 0):
     """
     Write directly in the memory of the process
     """
+
+    # XXX: check if memory exists
+    if addr == None:
+        addr = threads.GetEip()
+        
     b = create_string_buffer(buff)
     n = Writememory(
         c_void_p(addressof(b)),
@@ -72,7 +77,7 @@ def ReadMemory(size, addr = None, mode = 0):
     """
     # XXX: test if the address exists
     if addr == None:
-        addr = GetEip()
+        addr = threads.GetEip()
 
     buff = create_string_buffer(size)
     Readmemory(

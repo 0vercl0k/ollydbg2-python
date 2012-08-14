@@ -19,8 +19,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from breakpoints_wrappers import *
-from utils_wrappers import Run
-from threads_wrappers import GetEip
+from breakpoints_constants import *
+import utils
+import threads
 
 def bps_set(address, bp_type = BP_BREAK | BP_MANUAL):
     """
@@ -35,7 +36,7 @@ def bps_goto(address):
     run the process.
     """
     bps_set(address, OneShotBreakpoint)
-    Run()
+    utils.Run()
 
 def bpsc_set(address, cond, bp_type = BP_MANUAL):
     """
@@ -163,8 +164,8 @@ class Breakpoint(object):
         """
         Run the executable until we reach our breakpoint
         """
-        while GetEip() != self.address:
-            Run()
+        while threads.GetEip() != self.address:
+            utils.Run()
 
 class SoftwareBreakpoint(Breakpoint):
     """

@@ -19,8 +19,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from utils_wrappers import *
-from threads_wrappers import GetEip
-from memory import IsMemoryExists, FindMemory, ReadMemory
+import threads
+import memory
 
 def AddUserComment(address, s):
     """
@@ -138,9 +138,9 @@ def FindInstr(instr, address_start = None):
     Find the address of a specific instruction
     """
     if address_start == None:
-        address_start = GetEip()
+        address_start = threads.GetEip()
 
-    if IsMemoryExists(address_start) == False:
+    if memory.IsMemoryExists(address_start) == False:
         return 0
 
     # now assembleallforms to get the t_asmmod required to call comparecommand
@@ -152,7 +152,7 @@ def FindInstr(instr, address_start = None):
         raise(e)
 
     # get information about the memory block
-    mem_info = FindMemory(address_start).contents
+    mem_info = memory.FindMemory(address_start).contents
 
     # now we can call comparecommand
     size_to_dump = mem_info.size - (address_start - mem_info.base)
@@ -166,7 +166,7 @@ def FindInstr(instr, address_start = None):
         if (offset + size_to_read) >= size_to_dump:
             size_to_read = size_to_dump - offset
 
-        code_process = ReadMemory(size_to_read, address_start + offset)
+        code_process = memory.ReadMemory(size_to_read, address_start + offset)
 
         r = CompareCommand(
             code_process,
@@ -241,21 +241,21 @@ def FindHex(s, address_start = None):
     assert(filter(lambda c: c in '0123456789abcdef?', s) == s)
 
     if address_start == None:
-        address_start = GetEip()
+        address_start = threads.GetEip()
 
     # some memory must be mapped at this address
-    if IsMemoryExists(address_start) == False:
+    if memory.IsMemoryExists(address_start) == False:
         return 0
 
     # get information about the memory block
-    mem_info = FindMemory(address_start).contents
+    mem_info = memory.FindMemory(address_start).contents
 
     size_mem_block = mem_info.size - (address_start - mem_info.base)
     offset, found = 0, False
     nb_bytes = len(s) / 2
 
     while offset < (size_mem_block - nb_bytes) and found == False:
-        data = ReadMemory(nb_bytes, address_start + offset)
+        data = memory.ReadMemory(nb_bytes, address_start + offset)
         
         if hex_matched(data, s):
             found = True
