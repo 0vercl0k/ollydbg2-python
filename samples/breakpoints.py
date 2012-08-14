@@ -49,7 +49,7 @@ def main():
     StepInto()
 
     print 'Now dump the decrypted content'
-    s = ReadMemory(addr_s, size_s)
+    s = ReadMemory(size_s, addr_s)
     print "String decrypted: '%s'" % s
 
     print 'Now goto the RET'

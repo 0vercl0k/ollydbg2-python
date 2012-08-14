@@ -44,14 +44,13 @@ def main():
     bps_goto(strcmp_address)
 
     print 'Dumping the address of the password on the stack ([ARG2])'
-    r = GetCurrentThreadRegisters()
-    pp_pass = r.r[REG_ESP] + 4 + 4
+    pp_pass = GetEsp() + 4 + 4
 
     print 'Now getting the address of the password'
     p_pass = ReadDwordMemory(pp_pass)
 
     print 'Perfect, time to dump the password located at %#.8x, here it is:' % p_pass
-    print ReadMemory(p_pass, 18)
+    print ReadMemory(18, p_pass)
 
     print 'Now executing the function until the RET..'
     ExecuteUntilRet()
@@ -68,7 +67,7 @@ def main():
     WriteMemory(0x00402070, 'hijacked printf!\x00')
 
     print 'Patching the code at EIP to place our address on the stack correctly..'
-    PatchCode(GetEip(), 'mov dword [esp], 0x00402070')
+    PatchCode('mov dword [esp], 0x00402070')
 
     ExecuteUntilRet()
     print "I guess it's done, hope you enjoyed it!"

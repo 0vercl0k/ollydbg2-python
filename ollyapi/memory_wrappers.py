@@ -21,6 +21,7 @@
 from ctypes import *
 from common import *
 from memory_constants import *
+from threads_wrappers import GetEip
 
 # stdapi (ulong) Readmemory(void *buf,ulong addr,ulong size,int mode);
 Readmemory_TYPE = WINFUNCTYPE(c_ulong, c_void_p, c_ulong, c_ulong, c_int)
@@ -65,10 +66,14 @@ def WriteMemory(addr, buff, mode = 0):
 
     return n
 
-def ReadMemory(addr, size, mode = 0):
+def ReadMemory(size, addr = None, mode = 0):
     """
     Read the memory of the process at a specific address
     """
+    # XXX: test if the address exists
+    if addr == None:
+        addr = GetEip()
+
     buff = create_string_buffer(size)
     Readmemory(
         c_void_p(addressof(buff)),

@@ -53,7 +53,7 @@ Disasm = Disasm_TYPE(resolve_api('Disasm'))
 
 # stdapi (ulong) Assemble(wchar_t *src,ulong ip,uchar *buf,ulong nbuf,int mode,wchar_t *errtxt);
 Assemble_TYPE = WINFUNCTYPE(c_ulong, c_wchar_p, c_ulong, c_char_p, c_ulong, c_int, c_wchar_p)
-Assemble = Assemble_TYPE(resolve_api('Assemble'))
+Assemble__ = Assemble_TYPE(resolve_api('Assemble'))
 
 # stdapi (int) Assembleallforms(wchar_t *src,ulong ip,t_asmmod *model,int maxmodel,int mode,wchar_t *errtxt);
 Assembleallforms_TYPE = WINFUNCTYPE(c_int, c_wchar_p, c_ulong, t_asmmod_p, c_int, c_int, c_wchar_p)
@@ -153,7 +153,7 @@ def Assemble_(s, address = 0):
     # XXX: it should be enough (?)
     error_msg = (c_wchar * 100)()
 
-    sizeof_assembled = Assemble(
+    sizeof_assembled = Assemble__(
         c_wchar_p(s),
         c_ulong(address),
         code,

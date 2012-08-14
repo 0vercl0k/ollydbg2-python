@@ -20,7 +20,6 @@
 #
 from memory_wrappers import *
 from threads_wrappers import GetCpuThreadId
-from utils import Assemble
 from struct import unpack as u
 from binascii import unhexlify
 
@@ -49,11 +48,14 @@ def ResolveApiAddress(module, function):
 
     return None
 
-def ReadDwordMemory(address):
+def ReadDwordMemory(address = None):
     """
     Read a dword in memory
     """
-    data = ReadMemory(address, 4)
+    if address == None:
+        address = GetEip()
+
+    data = ReadMemory(4, address)
     return u('<I', data)[0]
 
 def IsMemoryExists(address):
@@ -62,10 +64,14 @@ def IsMemoryExists(address):
     """
     return IsNullPointer(FindMemory(address)) == False
 
-def PatchCodeWithHex(address, s):
+def PatchCodeWithHex(s, address = None):
     """
     Patch the code at address with unhexlify(s)
     """
+    # XXX: test if the memory exists
+    if address == None:
+        address = GetEip()
+
     bin = ''
     try:
         bin = unhexlify(s)
@@ -75,10 +81,17 @@ def PatchCodeWithHex(address, s):
     # patch the code
     WriteMemory(address, bin)
 
-def PatchCode(address, s):
+def PatchCode(s, address = None):
     """
     Assemble s and patch address
     """
+    # XXX: fix import problem, it's really a nightmare currently
+    from utils import Assemble
+
+    # XXX: test if the memory exists
+    if address == None:
+        address = GetEip()
+
     bin = ''
     try:
         bin, s = Assemble(s)

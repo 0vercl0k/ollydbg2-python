@@ -19,8 +19,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from utils_wrappers import *
-# from memory import IsMemoryExists
-from memory_wrappers import FindMemory, ReadMemory
+from threads_wrappers import GetEip
+from memory import IsMemoryExists, FindMemory, ReadMemory
 
 def AddUserComment(address, s):
     """
@@ -133,10 +133,13 @@ def Assemble(s, address = 0):
 
     return (code, size)
 
-def FindInstr(instr, address_start):
+def FindInstr(instr, address_start = None):
     """
     Find the address of a specific instruction
     """
+    if address_start == None:
+        address_start = GetEip()
+
     if IsMemoryExists(address_start) == False:
         return 0
 
@@ -163,7 +166,7 @@ def FindInstr(instr, address_start):
         if (offset + size_to_read) >= size_to_dump:
             size_to_read = size_to_dump - offset
 
-        code_process = ReadMemory(address_start + offset, size_to_read)
+        code_process = ReadMemory(size_to_read, address_start + offset)
 
         r = CompareCommand(
             code_process,
@@ -184,7 +187,7 @@ def FindInstr(instr, address_start):
 
     return 0
 
-def FindHex(s, address_start):
+def FindHex(s, address_start = None):
     """
     Find hexadecimal values like E9??FF?A??
     The '?' is a wildcard for one nibbles ; that idea comes from the excellent ODBG scripting language
@@ -237,6 +240,9 @@ def FindHex(s, address_start):
     # we only accept hexa digits and the wildcard '?'
     assert(filter(lambda c: c in '0123456789abcdef?', s) == s)
 
+    if address_start == None:
+        address_start = GetEip()
+
     # some memory must be mapped at this address
     if IsMemoryExists(address_start) == False:
         return 0
@@ -249,7 +255,7 @@ def FindHex(s, address_start):
     nb_bytes = len(s) / 2
 
     while offset < (size_mem_block - nb_bytes) and found == False:
-        data = ReadMemory(address_start + offset, nb_bytes)
+        data = ReadMemory(nb_bytes, address_start + offset)
         
         if hex_matched(data, s):
             found = True
