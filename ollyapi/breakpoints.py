@@ -160,12 +160,12 @@ class Breakpoint(object):
         """
         pass
 
-    def goto(self):
+    def goto(self, pass_exception = 0):
         """
         Run the executable until we reach our breakpoint
         """
         while threads.GetEip() != self.address:
-            utils.Run()
+            utils.Run(utils.STAT_RUNNING, pass_exception)
 
 class SoftwareBreakpoint(Breakpoint):
     """
