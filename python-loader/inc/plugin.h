@@ -17,21 +17,8 @@
 // possibility of such damages.                                               //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
-//
-// Changelog: (edits by atom0s) 
-// 
-//  -> Fixed: Redefinition inclusion; added pragma and ifdef guard.
-//  -> Fixed: DllImport bug; type was defined before the import.
-//  -> Fixed: Exports redefined to proper names without underscore.
-//
-////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
-#ifndef __OLLYDBG2_PLUGIN_INCLUDED__
-#define __OLLYDBG2_PLUGIN_INCLUDED__
-
-#define PLUGIN_VERSION 201             // Version of plugin interface
+#define PLUGIN_VERSION 0x00020002      // Version of plugin interface
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -190,9 +177,10 @@ struct t_dump;                         // Forward reference
 #define DM_EFORCE      0x01000000      // Check if named entry, too
 #define DM_DIFFMOD     0x02000000      // Check if points to different module
 #define DM_RELOFFS     0x04000000      // Check if points inside subroutine
+#define DM_ANALYSED    0x08000000      // Check if points to decoded data
 
 // Standard commenting mode. Note: DM_DIFFMOD and DM_RELOFFS are not included.
-#define DM_COMMENT     (DM_STRING|DM_STRPTR|DM_FOLLOW|DM_ENTRY)
+#define DM_COMMENT     (DM_STRING|DM_STRPTR|DM_FOLLOW|DM_ENTRY|DM_ANALYSED)
 
 // Address decoding mode, used by Labeladdress().
 #define ADDR_SYMMASK   0x00000003      // Mask to extract sym presentation mode
@@ -279,8 +267,7 @@ stdapi (int)     Simpleaddress(wchar_t *text,ulong addr,
                    uchar *mask,int *select);
 stdapi (void)    Heapsort(void *data,const int count,const int size,
                    int (_USERENTRY *compare)(const void *,const void *));
-stdapi (void)    Heapsortex(void *data,const int count,const int size,
-                   int (_USERENTRY *compareex)(const void *,const void *,ulong),
+stdapi (void)    Heapsortex(void *data,const int count,const int size, int (_USERENTRY *compareex)(const void *,const void *,ulong),
                    ulong lp);
 stdapi (uchar *) Readfile(wchar_t *path,ulong fixsize,ulong *psize);
 stdapi (int)     Devicenametodosname(wchar_t *devname,wchar_t *dosname);
@@ -413,6 +400,7 @@ stdapi (int)     Pluginsaverecord(t_uddsave *psave,ulong tag,
 stdapi (int)     Pluginpackedrecord(t_uddsave *psave,ulong tag,
                    ulong size,void *data);
 stdapi (void)    Pluginmodulechanged(ulong addr);
+stdapi (int)     Plugingetuniquedatatype(void);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -941,6 +929,7 @@ stdapi (void)    Setstatus(t_status newstatus);
 #define NM_TRICK       0x38            // Parentheses of tricky sequences
 #define DT_SWITCH      0x40            // Switch descriptor (struct dt_switch)
 #define DT_CASE        0x41            // Case descriptor (struct dt_case)
+#define DT_MNEMO       0x42            // Alternative mnemonics data (dt_mnemo)
 #define NM_DLLPARMS    0x44            // Parameters of Call DLL dialog
 #define DT_DLLDATA     0x45            // Parameters of Call DLL dialog
 
@@ -1020,6 +1009,14 @@ typedef struct dt_case {               // Switch exit descriptor DT_CASE
   int            ncase;                // Number of cases (1..64, 0: default)
   ulong          value[NSWCASE];       // List of cases for exit
 } dt_case;
+
+// Flags indicating alternative forms of assembler mnemonics.
+#define MF_JZ          0x01            // JZ, JNZ instead of JE, JNE
+#define MF_JC          0x02            // JC, JNC instead of JAE, JB
+
+typedef struct dt_mnemo {              // Mnemonics decoding DT_MNEMO
+  uchar          flags;                // Set of MF_xxx
+} dt_mnemo;
 
 stdapi (int)     Insertdata(ulong addr,int type,void *data,ulong datasize);
 stdapi (ulong)   Finddata(ulong addr,int type,void *data,ulong datasize);
@@ -1101,6 +1098,7 @@ typedef struct sd_pred {               // Descriptor of predicted data
 #define SDM_INDEXED    0x00000001      // Indexed sorted data
 #define SDM_EXTADDR    0x00000002      // Address is extended by TY_AEXTMASK
 #define SDM_NOSIZE     0x00000004      // Header without size and type
+#define SDM_NOEXTEND   0x00000008      // Don't reallocate memory, fail instead
 
 // Address extension.
 #define TY_AEXTMASK    0x000000FF      // Mask to extract address extension
@@ -1221,11 +1219,15 @@ typedef struct sd_pred {               // Descriptor of predicted data
 #define NL_EORD        0x00010000      // Associated export ordinal available
 #define NL_IORD        0x00020000      // Associated import ordinal available
 
-typedef struct t_sorthdr {             // Header of sorted data field
+typedef struct t_sorthdr {             // Header of sorted data item
   ulong          addr;                 // Base address of the entry
   ulong          size;                 // Size of the entry
   ulong          type;                 // Type and address extension, TY_xxx
 } t_sorthdr;
+
+typedef struct t_sorthdr_nosize {      // Header of SDM_NOSIZE item
+  ulong          addr;                 // Base address of the entry
+} t_sorthdr_nosize;
 
 typedef int  SORTFUNC(const t_sorthdr *,const t_sorthdr *,const int);
 typedef void DESTFUNC(t_sorthdr *);
@@ -1363,7 +1365,7 @@ typedef struct t_bar {                 // Descriptor of columns in table window
 #define   DRAW_BDIS    0x00000006      // Disabled breakpoint
 #define   DRAW_IPBREAK 0x00000007      // Breakpoint at actual EIP
 #define   DRAW_AUX     0x00000008      // Auxiliary colours
-#define   DRAW_SELUL   0x00000009      // Selecion and underlining
+#define   DRAW_SELUL   0x00000009      // Selection and underlining
 // Indirect pairs used to highlight commands.
 #define   DRAW_PLAIN   0x0000000C      // Plain commands
 #define   DRAW_JUMP    0x0000000D      // Unconditional jump commands
@@ -1913,8 +1915,8 @@ stdapi (int)     Createnesteddata(t_nested *nd,ulong itemsize,int nexp,
                    NDDEST *destfunc);
 stdapi (void *)  Addnesteddata(t_nested *nd,void *item);
 stdapi (void)    Deletenestedrange(t_nested *nd,ulong addr0,ulong addr1);
-stdapi (int)     Getnestingpattern(t_nested *nd,ulong addr,wchar_t *pat,int npat,
-                   uchar *mask,int showentry,int *isend);
+stdapi (int)     Getnestingpattern(t_nested *nd,ulong addr,wchar_t *pat,
+                   int npat,uchar *mask,int showentry,int *isend);
 stdapi (int)     Getnestingdepth(t_nested *nd,ulong addr);
 stdapi (void *)  Findnesteddata(t_nested *nd,ulong addr,int level);
 
@@ -2244,7 +2246,7 @@ typedef struct t_thread {              // Information about active threads
   ulong          dummy;                // Always 1
   ulong          type;                 // Service information, TY_xxx+THR_xxx
   int            ordinal;              // Thread's ordinal number (1-based)
-  wchar_t          name[SHORTNAME];      // Short name of the thread
+  wchar_t        name[SHORTNAME];      // Short name of the thread
   HANDLE         thread;               // Thread handle, for OllyDbg only!
   ulong          tib;                  // Thread Information Block
   ulong          entry;                // Thread entry point
@@ -2421,6 +2423,15 @@ stdapi (void)    Registermodifiedbyuser(t_thread *pthr);
 #define   D_RARE       0x40000000      // Rare or obsolete in Win32 apps
 #define   D_SUSPICIOUS 0x80000000      // Suspicious command
 #define   D_UNDOC      0xC0000000      // Undocumented command
+
+// Extension of D_xxx.
+#define DX_ZEROMASK    0x00000003      // How to decode FLAGS.Z flag
+#define   DX_JE        0x00000001      // JE, JNE instead of JZ, JNZ
+#define   DX_JZ        0x00000002      // JZ, JNZ instead of JE, JNE
+#define DX_CARRYMASK   0x0000000C      // How to decode FLAGS.C flag
+#define   DX_JB        0x00000004      // JAE, JB instead of JC, JNC
+#define   DX_JC        0x00000008      // JC, JNC instead of JAE, JB
+#define DX_WONKYTRAP   0x00000100      // Don't single-step this command
 
 // Type of operand, only one is allowed.
 #define B_ARGMASK      0x000000FF      // Mask to extract type of argument
@@ -2645,7 +2656,8 @@ typedef struct t_modrm {               // ModRM decoding
 typedef struct t_predict {             // Prediction of execution
   ulong          addr;                 // Predicted EIP or NULL if uncertain
   ulong          one;                  // Must be 1
-  ulong          type;                 // Type of prediction, TY_xxx/PR_xxx
+  ulong          type;                 // Type, TY_xxx/PR_xxx
+  ushort         flagsmeaning;         // Set of DX_ZEROMASK|DX_CARRYMASK
   ulong          rstate[NREG];         // State of register, set of PST_xxx
   ulong          rconst[NREG];         // Constant related to register
   ulong          jmpstate;             // State of EIP after jump or return
@@ -2818,6 +2830,7 @@ typedef struct t_disasm {              // Disassembled command
   ulong          ip;                   // Address of first command byte
   ulong          size;                 // Full length of command, bytes
   ulong          cmdtype;              // Type of command, D_xxx
+  ulong          exttype;              // More features, set of DX_xxx
   ulong          prefixes;             // List of prefixes, set of PF_xxx
   ulong          nprefix;              // Number of prefixes, including SSE2
   ulong          memfixup;             // Offset of first 4-byte fixup or -1
@@ -2885,6 +2898,7 @@ typedef void cdecl EMUFUNC(t_emu *,t_reg *);
 typedef struct t_bincmd {              // Description of 80x86 command
   wchar_t        *name;                // Symbolic name for this command
   ulong          cmdtype;              // Command's features, set of D_xxx
+  ulong          exttype;              // More features, set of DX_xxx
   ulong          length;               // Length of main code (before ModRM/SIB)
   ulong          mask;                 // Mask for first 4 bytes of the command
   ulong          code;                 // Compare masked bytes with this
@@ -2925,7 +2939,7 @@ typedef struct t_asmmod {              // Description of assembled command
   uchar          ncode;                // Length of code w/o prefixes, bytes
   uchar          features;             // Code features, set of AMF_xxx
   uchar          postbyte;             // Postbyte (if AMF_POSTBYTE set)
-  uchar          nop;                  // Number of operands (no pseudooperands)
+  uchar          noperand;             // Number of operands (no pseudooperands)
   t_modop        op[NOPERAND];         // Description of operands
 } t_asmmod;
 
@@ -2957,9 +2971,9 @@ stdapi (int)     Printfloat10(wchar_t *s,long double ext);
 stdapi (int)     Printmmx(wchar_t *s,uchar *data);
 stdapi (int)     Commentcharacter(wchar_t *s,int c,int mode);
 stdapi (int)     Nameoffloat(wchar_t *s,uchar *data,ulong size);
-stdapi (ulong)   Disasm(uchar *cmd,ulong cmdsize,ulong cmdip,uchar *cmddec,
-                   t_disasm *cmdda,int cmdmode,t_reg *cmdreg,
-                   t_predict *cmdpredict);
+stdapi (ulong)   Disasm(uchar *cmd,ulong cmdsize,ulong ip,uchar *dec,
+                   t_disasm *da,int mode,t_reg *reg,
+                   t_predict *predict);
 stdapi (ulong)   Cmdinfo(uchar *cmd,ulong cmdsize,ulong cmdip,
                    t_cmdinfo *ci,int cmdmode,t_reg *cmdreg);
 stdapi (ulong)   Disassembleforward(uchar *copy,ulong base,ulong size,
@@ -3755,6 +3769,7 @@ stdapi (ulong)   Scrolldumpwindow(t_dump *pd,ulong addr,int mode);
 stdapi (int)     Alignselection(t_dump *pd,ulong *sel0,ulong *sel1);
 stdapi (int)     Getproclimits(ulong addr,ulong *amin,ulong *amax);
 stdapi (int)     Getextproclimits(ulong addr,ulong *amin,ulong *amax);
+stdapi (int)     Newdumpselection(t_dump *pd,ulong addr,ulong size);
 stdapi (t_dump *) Findfiledump(wchar_t *path);
 stdapi (HWND)    Createdumpwindow(wchar_t *title,ulong base,ulong size,
                    wchar_t *path,ulong dumptype,ulong sel0,ulong sel1,
@@ -4166,107 +4181,123 @@ typedef struct t_run {                 // Run status of debugged application
 
 ///////////////////////////////// DISASSEMBLER /////////////////////////////////
 
-oddata (t_bincmd) _bincmd[];            // List of 80x86 commands
+oddata (t_bincmd) bincmd[];            // List of 80x86 commands
 
-oddata (wchar_t *) _regname[3][NREG];   // Names of 8/16/32-bit registers
-oddata (wchar_t *) _segname[NREG];      // Names of segment registers
-oddata (wchar_t *) _fpuname[2][NREG];   // FPU regs (ST(n) and STn forms)
-oddata (wchar_t *) _mmxname[NREG];      // Names of MMX/3DNow! registers
-oddata (wchar_t *) _ssename[NREG];      // Names of SSE registers
-oddata (wchar_t *) _crname[NREG];       // Names of control registers
-oddata (wchar_t *) _drname[NREG];       // Names of debug registers
-oddata (wchar_t *) _sizename[17];       // Data size keywords
-oddata (wchar_t *) _sizekey[17];        // Keywords for immediate data
-oddata (wchar_t *) _sizeatt[17];        // Keywords for immediate data, AT&T
+oddata (wchar_t *) regname[3][NREG];   // Names of 8/16/32-bit registers
+oddata (wchar_t *) segname[NREG];      // Names of segment registers
+oddata (wchar_t *) fpuname[2][NREG];   // FPU regs (ST(n) and STn forms)
+oddata (wchar_t *) mmxname[NREG];      // Names of MMX/3DNow! registers
+oddata (wchar_t *) ssename[NREG];      // Names of SSE registers
+oddata (wchar_t *) crname[NREG];       // Names of control registers
+oddata (wchar_t *) drname[NREG];       // Names of debug registers
+oddata (wchar_t *) sizename[17];       // Data size keywords
+oddata (wchar_t *) sizekey[17];        // Keywords for immediate data
+oddata (wchar_t *) sizeatt[17];        // Keywords for immediate data, AT&T
 
 /////////////////////////////// OLLYDBG SETTINGS ///////////////////////////////
 
-oddata (wchar_t) _ollyfile[MAXPATH];    // Path to OllyDbg
+/*
+    Force the _symbol, in order to be OK with VS when compiling
+*/
+oddata (wchar_t) ollyfile[MAXPATH];    // Path to OllyDbg
 oddata (wchar_t) _ollydir[MAXPATH];     // OllyDbg directory w/o backslash
-oddata (wchar_t) _systemdir[MAXPATH];   // Windows system directory
-oddata (wchar_t) _plugindir[MAXPATH];   // Plugin data dir without backslash
+oddata (wchar_t) systemdir[MAXPATH];   // Windows system directory
+oddata (wchar_t) plugindir[MAXPATH];   // Plugin data dir without backslash
 
-oddata (HINSTANCE) _hollyinst;          // Current OllyDbg instance
+oddata (HINSTANCE) hollyinst;          // Current OllyDbg instance
 oddata (HWND)    _hwollymain;           // Handle of the main OllyDbg window
-oddata (HWND)    _hwclient;             // Handle of MDI client or NULL
-oddata (wchar_t) _ottable[SHORTNAME];   // Class of table windows
-oddata (ulong)   _cpufeatures;          // CPUID feature information
-oddata (int)     _ischild;              // Whether child debugger
+oddata (HWND)    hwclient;             // Handle of MDI client or NULL
+oddata (wchar_t) ottable[SHORTNAME];   // Class of table windows
+oddata (ulong)   cpufeatures;          // CPUID feature information
+oddata (int)     ischild;              // Whether child debugger
 
-oddata (int)     _asciicodepage;        // Code page to display ASCII dumps
+oddata (int)     asciicodepage;        // Code page to display ASCII dumps
 #ifdef FILE                            // Requires <stdio.h>
-oddata (FILE *)  _tracefile;            // System log file or NULL
+oddata (FILE *)  tracefile;            // System log file or NULL
 #endif
-oddata (int)     _restorewinpos;        // Restore window position & appearance
+oddata (int)     restorewinpos;        // Restore window position & appearance
 
 ////////////////////////////// OLLYDBG STRUCTURES //////////////////////////////
 
-oddata (t_font)  _font[NFIXFONTS];      // Fixed fonts used in table windows
-oddata (t_font)  _sysfont;              // Proportional system font
-oddata (t_font)  _titlefont;            // Proportional, 2x height of sysfont
-oddata (t_font)  _fixfont;              // Fixed system font
-oddata (COLORREF) _color[NCOLORS];      // Colours used by OllyDbg
-oddata (t_scheme) _scheme[NSCHEMES];    // Colour schemes used in table windows
-oddata (t_scheme) _hilite[NHILITE];     // Colour schemes used for highlighting
+oddata (t_font)  font[NFIXFONTS];      // Fixed fonts used in table windows
+oddata (t_font)  sysfont;              // Proportional system font
+oddata (t_font)  titlefont;            // Proportional, 2x height of sysfont
+oddata (t_font)  fixfont;              // Fixed system font
+oddata (COLORREF) color[NCOLORS];      // Colours used by OllyDbg
+oddata (t_scheme) scheme[NSCHEMES];    // Colour schemes used in table windows
+oddata (t_scheme) hilite[NHILITE];     // Colour schemes used for highlighting
 
 /////////////////////////////////// DEBUGGEE ///////////////////////////////////
 
-oddata (wchar_t) _executable[MAXPATH];  // Path to main (.exe) file
-oddata (wchar_t) _arguments[ARGLEN];    // Command line passed to debuggee
+oddata (wchar_t) executable[MAXPATH];  // Path to main (.exe) file
+oddata (wchar_t) arguments[ARGLEN];    // Command line passed to debuggee
 
-oddata (int)     _netdbg;               // .NET debugging active
-oddata (int)     _rundll;               // Debugged file is a DLL
-oddata (HANDLE)  _process;              // Handle of Debuggee or NULL
-oddata (ulong)   _processid;            // Process ID of Debuggee or 0
-oddata (ulong)   _mainthreadid;         // Thread ID of main thread or 0
-oddata (t_run)   _run;                  // Run status of debugged application
-oddata (int)     _skipsystembp;         // First system INT3 not yet hit
+oddata (int)     netdbg;               // .NET debugging active
+oddata (int)     rundll;               // Debugged file is a DLL
+oddata (HANDLE)  process;              // Handle of Debuggee or NULL
+oddata (ulong)   processid;            // Process ID of Debuggee or 0
+oddata (ulong)   mainthreadid;         // Thread ID of main thread or 0
+oddata (t_run)   run;                  // Run status of debugged application
+oddata (int)     skipsystembp;         // First system INT3 not yet hit
 
-oddata (ulong)   _debugbreak;           // Address of DebugBreak() in Debuggee
-oddata (ulong)   _dbgbreakpoint;        // Address of DbgBreakPoint() in Debuggee
-oddata (ulong)   _kiuserexcept;         // Address of KiUserExceptionDispatcher()
-oddata (ulong)   _zwcontinue;           // Address of ZwContinue() in Debuggee
-oddata (ulong)   _uefilter;             // Address of UnhandledExceptionFilter()
-oddata (ulong)   _ntqueryinfo;          // Address of NtQueryInformationProcess()
-oddata (ulong)   _corexemain;           // Address of MSCOREE:_CorExeMain()
-oddata (ulong)   _peblock;              // Address of PE block in Debuggee
-oddata (ulong)   _kusershareddata;      // Address of KUSER_SHARED_DATA
-oddata (ulong)   _userspacelimit;       // Size of virtual process memory
+oddata (ulong)   debugbreak;           // Address of DebugBreak() in Debuggee
+oddata (ulong)   dbgbreakpoint;        // Address of DbgBreakPoint() in Debuggee
+oddata (ulong)   kiuserexcept;         // Address of KiUserExceptionDispatcher()
+oddata (ulong)   zwcontinue;           // Address of ZwContinue() in Debuggee
+oddata (ulong)   uefilter;             // Address of UnhandledExceptionFilter()
+oddata (ulong)   ntqueryinfo;          // Address of NtQueryInformationProcess()
+oddata (ulong)   corexemain;           // Address of MSCOREE:_CorExeMain()
+oddata (ulong)   peblock;              // Address of PE block in Debuggee
+oddata (ulong)   kusershareddata;      // Address of KUSER_SHARED_DATA
+oddata (ulong)   userspacelimit;       // Size of virtual process memory
 
-oddata (t_rtcond) _rtcond;              // Run trace break condition
-oddata (t_rtprot) _rtprot;              // Run trace protocol condition
+oddata (t_rtcond) rtcond;              // Run trace break condition
+oddata (t_rtprot) rtprot;              // Run trace protocol condition
 
 ///////////////////////////////// DATA TABLES //////////////////////////////////
 
-oddata (t_table) _list;                 // List descriptor
-oddata (t_sorted) _premod;              // Preliminary module data
-oddata (t_table) _module;               // Loaded modules
-oddata (t_sorted) _aqueue;              // Modules that are not yet analysed
-oddata (t_table) _thread;               // Active threads
-oddata (t_table) _memory;               // Allocated memory blocks
-oddata (t_table) _win;                  // List of windows
-oddata (t_table) _bpoint;               // INT3 breakpoints
-oddata (t_table) _bpmem;                // Memory breakpoints
-oddata (t_sorted) _bppage;              // Memory pages with changed attributes
-oddata (t_table) _bphard;               // Hardware breakpoints
-oddata (t_table) _watch;                // Watch expressions
-oddata (t_table) _patch;                // List of patches from previous runs
-oddata (t_sorted) _procdata;            // Descriptions of analyzed procedures
-oddata (t_table) _source;               // List of source files
-oddata (t_table) _srccode;              // Source code
+oddata (t_table) list;                 // List descriptor
+oddata (t_sorted) premod;              // Preliminary module data
+oddata (t_table) module;               // Loaded modules
+oddata (t_sorted) aqueue;              // Modules that are not yet analysed
+oddata (t_table) thread;               // Active threads
+oddata (t_table) memory;               // Allocated memory blocks
+oddata (t_table) win;                  // List of windows
+oddata (t_table) bpoint;               // INT3 breakpoints
+oddata (t_table) bpmem;                // Memory breakpoints
+oddata (t_sorted) bppage;              // Memory pages with changed attributes
+oddata (t_table) bphard;               // Hardware breakpoints
+oddata (t_table) watch;                // Watch expressions
+oddata (t_table) patch;                // List of patches from previous runs
+oddata (t_sorted) procdata;            // Descriptions of analyzed procedures
+oddata (t_table) source;               // List of source files
+oddata (t_table) srccode;              // Source code
 
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// PLUGIN EXPORTS ////////////////////////////////
 
-pentry (int)     ODBG2_Pluginquery(int ollydbgversion,
+// Relatively infrequent events passed to ODBG2_Pluginnotify().
+#define PN_NEWPROC     1               // New process is created
+#define PN_ENDPROC     2               // Process is terminated
+#define PN_NEWTHR      3               // New thread is created
+#define PN_ENDTHR      4               // Thread is terminated
+#define PN_PREMOD      5               // New module is reported by Windows
+#define PN_NEWMOD      6               // New module is added to the table
+#define PN_ENDMOD      7               // Module is removed from the memory
+#define PN_REMOVE      16              // OllyDbg removes analysis from range
+
+pentry (int)     ODBG2_Pluginquery(int ollydbgversion,ulong *features,
                    wchar_t pluginname[SHORTNAME],
                    wchar_t pluginversion[SHORTNAME]);
+pentry (int)     ODBG2_Plugininit(void);
 pentry (void)    ODBG2_Pluginanalyse(t_module *pmod);
 #ifdef DEBUG_EVENT                     // Requires <winnt.h>
 pentry (void)    ODBG2_Pluginmainloop(DEBUG_EVENT *debugevent);
 #endif
-pentry (void)    ODBG2_Pluginexception(t_reg *preg);
+pentry (void)    ODBG2_Pluginnotify(int code,void *data,
+                   ulong parm1,ulong parm2);
+pentry (void)    ODBG2_Pluginexception(t_run *prun,t_thread *pthr,t_reg *preg);
 pentry (int)     ODBG2_Plugindump(t_dump *pd,wchar_t *s,uchar *mask,int n,
                    int *select,ulong addr,int column);
 pentry (t_menu *) ODBG2_Pluginmenu(wchar_t *type);
@@ -4277,80 +4308,3 @@ pentry (void)    ODBG2_Pluginuddrecord(t_module *pmod,int ismainmodule,
 pentry (void)    ODBG2_Pluginreset(void);
 pentry (int)     ODBG2_Pluginclose(void);
 pentry (void)    ODBG2_Plugindestroy(void);
-
-
-////////////////////////////////////////////////////////////////////////////////
-//////////////////////////// PLUGIN HEADER FIXES ///////////////////////////////
-
-#ifdef __cplusplus
-    #define aqueue 			    _aqueue
-    #define arguments 			_arguments
-    #define asciicodepage 		_asciicodepage
-    #define bincmd 			    _bincmd
-    #define bphard 			    _bphard
-    #define bpmem 			    _bpmem
-    #define bpoint 			    _bpoint
-    #define bppage 			    _bppage
-    #define color 			    _color
-    #define corexemain 			_corexemain
-    #define cpufeatures 		_cpufeatures
-    #define crname 			    _crname
-    #define dbgbreakpoint 		_dbgbreakpoint
-    #define debugbreak 			_debugbreak
-    #define drname 			    _drname
-    #define executable 			_executable
-    #define fixfont 			_fixfont
-    #define font 			    _font
-    #define fpuname 			_fpuname
-    #define hilite 			    _hilite
-    #define hollyinst 			_hollyinst
-    #define hwclient 			_hwclient
-    #define hwollymain 			_hwollymain
-    #define ischild 			_ischild
-    #define kiuserexcept 		_kiuserexcept
-    #define kusershareddata 	_kusershareddata
-    #define list 			    _list
-    #define mainthreadid 		_mainthreadid
-    #define memory 			    _memory
-    #define mmxname 			_mmxname
-    #define module 			    _module
-    #define netdbg 			    _netdbg
-    #define ntqueryinfo 		_ntqueryinfo
-    #define ollydir 			_ollydir
-    #define ollyfile 			_ollyfile
-    #define ottable 			_ottable
-    #define patch 			    _patch
-    #define peblock 			_peblock
-    #define plugindir 			_plugindir
-    #define premod 			    _premod
-    #define procdata 			_procdata
-    #define process 			_process
-    #define processid 			_processid
-    #define regname 			_regname
-    #define restorewinpos 		_restorewinpos
-    #define rtcond 			    _rtcond
-    #define rtprot 			    _rtprot
-    #define run 			    _run
-    #define rundll 			    _rundll
-    #define scheme 			    _scheme
-    #define segname 			_segname
-    #define sizeatt 			_sizeatt
-    #define sizekey 			_sizekey
-    #define sizename 			_sizename
-    #define skipsystembp 		_skipsystembp
-    #define source 			    _source
-    #define srccode 			_srccode
-    #define ssename 			_ssename
-    #define sysfont 			_sysfont
-    #define systemdir 			_systemdir
-    #define thread 			    _thread
-    #define titlefont 			_titlefont
-    #define tracefile 			_tracefile
-    #define uefilter 			_uefilter
-    #define userspacelimit 		_userspacelimit
-    #define watch 			    _watch
-    #define win 			    _win
-    #define zwcontinue 			_zwcontinue
-#endif
-
-#endif // __OLLYDBG2_PLUGIN_INCLUDED__
