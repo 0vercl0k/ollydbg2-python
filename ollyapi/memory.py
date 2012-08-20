@@ -92,7 +92,7 @@ def PatchCode(s, address = None):
     # XXX: test if the memory exists
     if address == None:
         address = threads.GetEip()
-    print 'patching @ %#.8x' % address
+
     bin = ''
     try:
         bin, s = utils.Assemble(s)
