@@ -24,23 +24,23 @@ from memory_constants import *
 import threads
 
 # stdapi (ulong) Readmemory(void *buf,ulong addr,ulong size,int mode);
-Readmemory_TYPE = WINFUNCTYPE(c_ulong, c_void_p, c_ulong, c_ulong, c_int)
+Readmemory_TYPE = CFUNCTYPE(c_ulong, c_void_p, c_ulong, c_ulong, c_int)
 Readmemory = Readmemory_TYPE(resolve_api('Readmemory'))
 
 # stdapi (ulong) Writememory(const void *buf,ulong addr,ulong size,int mode);
-Writememory_TYPE = WINFUNCTYPE(c_ulong, c_void_p, c_ulong, c_ulong, c_int)
+Writememory_TYPE = CFUNCTYPE(c_ulong, c_void_p, c_ulong, c_ulong, c_int)
 Writememory = Writememory_TYPE(resolve_api('Writememory'))
 
 # stdapi (int) Expression(t_result *result, wchar_t *expression, uchar *data, ulong base, ulong size, ulong threadid, ulong a, ulong b, ulong mode);
-Expression_TYPE = WINFUNCTYPE(c_int, t_result_p, c_wchar_p, c_void_p, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong)
+Expression_TYPE = CFUNCTYPE(c_int, t_result_p, c_wchar_p, c_void_p, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong, c_ulong)
 Expression_ = Expression_TYPE(resolve_api('Expression'))
 
 # stdapi (void) Flushmemorycache(void);
-Flushmemorycache_TYPE = WINFUNCTYPE(None)
+Flushmemorycache_TYPE = CFUNCTYPE(None)
 Flushmemorycache = Flushmemorycache_TYPE(resolve_api('Flushmemorycache'))
 
 # stdapi (t_memory *) Findmemory(ulong addr);
-Findmemory_TYPE = WINFUNCTYPE(t_memory_p, c_ulong)
+Findmemory_TYPE = CFUNCTYPE(t_memory_p, c_ulong)
 Findmemory = Findmemory_TYPE(resolve_api('Findmemory'))
 
 def FlushMemoryCache():

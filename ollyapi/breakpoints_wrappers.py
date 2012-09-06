@@ -22,23 +22,23 @@ from ctypes import *
 from common import *
 
 # stdapi (int) Setint3breakpoint(ulong addr, ulong type, int fnindex, int limit, int count, wchar_t *condition, wchar_t *expression, wchar_t *exprtype);
-Setint3breakpoint_TYPE = WINFUNCTYPE(c_int, c_ulong, c_ulong, c_int, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
+Setint3breakpoint_TYPE = CFUNCTYPE(c_int, c_ulong, c_ulong, c_int, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
 Setint3breakpoint = Setint3breakpoint_TYPE(resolve_api('Setint3breakpoint'))
 
 # stdapi (int) Sethardbreakpoint(int index,ulong size,ulong type,int fnindex,ulong addr,int limit,int count,wchar_t *condition,wchar_t *expression,wchar_t *exprtype);
-Sethardbreakpoint_TYPE = WINFUNCTYPE(c_int, c_int, c_ulong, c_ulong, c_int, c_ulong, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
+Sethardbreakpoint_TYPE = CFUNCTYPE(c_int, c_int, c_ulong, c_ulong, c_int, c_ulong, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
 Sethardbreakpoint = Sethardbreakpoint_TYPE(resolve_api('Sethardbreakpoint'))
 
 # stdapi (int) Removeint3breakpoint(ulong addr,ulong type);
-Removeint3breakpoint_TYPE = WINFUNCTYPE(c_int, c_ulong, c_ulong)
+Removeint3breakpoint_TYPE = CFUNCTYPE(c_int, c_ulong, c_ulong)
 Removeint3breakpoint = Removeint3breakpoint_TYPE(resolve_api('Removeint3breakpoint'))
 
 # stdapi (int) Removehardbreakpoint(int index);
-Removehardbreakpoint_TYPE = WINFUNCTYPE(c_int, c_int)
+Removehardbreakpoint_TYPE = CFUNCTYPE(c_int, c_int)
 Removehardbreakpoint = Removehardbreakpoint_TYPE(resolve_api('Removehardbreakpoint'))
 
 # stdapi (int) Findfreehardbreakslot(ulong type);
-Findfreehardbreakslot_TYPE = WINFUNCTYPE(c_int, c_ulong)
+Findfreehardbreakslot_TYPE = CFUNCTYPE(c_int, c_ulong)
 Findfreehardbreakslot = Findfreehardbreakslot_TYPE(resolve_api('Findfreehardbreakslot'))
 
 def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):

@@ -25,42 +25,42 @@ from threads_constants import t_reg_p, t_reg
 from memory_wrappers import FlushMemoryCache
 
 # stdapi (int) InsertnameW(ulong addr,int type,wchar_t *s);
-InsertnameW_TYPE = WINFUNCTYPE(c_int, c_ulong, c_int, c_wchar_p)
+InsertnameW_TYPE = CFUNCTYPE(c_int, c_ulong, c_int, c_wchar_p)
 InsertnameW = InsertnameW_TYPE(resolve_api('InsertnameW'))
 
 # stdapi (int) Run(t_status status,int pass);
-Run_TYPE = WINFUNCTYPE(c_int, c_int, c_int)
+Run_TYPE = CFUNCTYPE(c_int, c_int, c_int)
 Run_ = Run_TYPE(resolve_api('Run'))
 
 # stdapi (t_module *) Findmainmodule(void);
-Findmainmodule_TYPE = WINFUNCTYPE(t_module_p)
+Findmainmodule_TYPE = CFUNCTYPE(t_module_p)
 Findmainmodule = Findmainmodule_TYPE(resolve_api('Findmainmodule'))
 
 # stdapi (int) Checkfordebugevent(void);
-Checkfordebugevent_TYPE = WINFUNCTYPE(c_int)
+Checkfordebugevent_TYPE = CFUNCTYPE(c_int)
 Checkfordebugevent = Checkfordebugevent_TYPE(resolve_api('Checkfordebugevent'))
 
 # oddata (wchar_t) _arguments[ARGLEN];    // Command line passed to debuggee
 _arguments = resolve_api('_arguments')
 
 # stdapi (int) Closeprocess(int confirm);
-Closeprocess_TYPE = WINFUNCTYPE(c_int, c_int)
+Closeprocess_TYPE = CFUNCTYPE(c_int, c_int)
 Closeprocess = Closeprocess_TYPE(resolve_api('Closeprocess'))
 
 # stdapi (ulong) Disasm(uchar *cmd,ulong cmdsize,ulong cmdip,uchar *cmddec,t_disasm *cmdda,int cmdmode,t_reg *cmdreg,t_predict *cmdpredict);
-Disasm_TYPE = WINFUNCTYPE(c_ulong, c_char_p, c_ulong, c_ulong, c_char_p, t_disasm_p, c_int, t_reg_p, t_predict_p)
+Disasm_TYPE = CFUNCTYPE(c_ulong, c_char_p, c_ulong, c_ulong, c_char_p, t_disasm_p, c_int, t_reg_p, t_predict_p)
 Disasm = Disasm_TYPE(resolve_api('Disasm'))
 
 # stdapi (ulong) Assemble(wchar_t *src,ulong ip,uchar *buf,ulong nbuf,int mode,wchar_t *errtxt);
-Assemble_TYPE = WINFUNCTYPE(c_ulong, c_wchar_p, c_ulong, c_char_p, c_ulong, c_int, c_wchar_p)
+Assemble_TYPE = CFUNCTYPE(c_ulong, c_wchar_p, c_ulong, c_char_p, c_ulong, c_int, c_wchar_p)
 Assemble__ = Assemble_TYPE(resolve_api('Assemble'))
 
 # stdapi (int) Assembleallforms(wchar_t *src,ulong ip,t_asmmod *model,int maxmodel,int mode,wchar_t *errtxt);
-Assembleallforms_TYPE = WINFUNCTYPE(c_int, c_wchar_p, c_ulong, t_asmmod_p, c_int, c_int, c_wchar_p)
+Assembleallforms_TYPE = CFUNCTYPE(c_int, c_wchar_p, c_ulong, t_asmmod_p, c_int, c_int, c_wchar_p)
 Assembleallforms = Assembleallforms_TYPE(resolve_api('Assembleallforms'))
 
 # stdapi (ulong)   Comparecommand(uchar *cmd,ulong cmdsize,ulong cmdip,t_asmmod *model,int nmodel,int *pa,int *pb,t_disasm *da);
-Comparecommand_TYPE = WINFUNCTYPE(c_ulong, c_char_p, c_ulong, c_ulong, t_asmmod_p, c_int, c_int_p, c_int_p, t_disasm_p)
+Comparecommand_TYPE = CFUNCTYPE(c_ulong, c_char_p, c_ulong, c_ulong, t_asmmod_p, c_int, c_int_p, c_int_p, t_disasm_p)
 Comparecommand = Comparecommand_TYPE(resolve_api('Comparecommand'))
 
 def InsertNameW(addr, type_, s):

@@ -18,7 +18,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-#define PLUGIN_VERSION 0x00020002      // Version of plugin interface
+#define PLUGIN_VERSION 0x00020003      // Version of plugin interface
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -31,7 +31,7 @@
 // 5. Most API functions are NOT thread-safe!
 // 6. Read documentation!
 
-#ifndef _UNICODE
+#if !defined(_UNICODE) && !defined(UNICODE)
   #error This version must be compiled with UNICODE on
 #endif
 
@@ -63,6 +63,17 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
+//////////////////// PREFERRED SETTINGS AND FIXES FOR MINGW ////////////////////
+
+#ifdef __MINGW32__
+  #pragma pack(1)                      // Force byte alignment of structures
+  #ifndef __CHAR_UNSIGNED__            // Verify that character is unsigned
+    #error Please set default char type to unsigned (option -funsigned-char)
+  #endif
+#endif
+
+
+////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// GLOBAL DEFINITIONS //////////////////////////////
 
 #ifndef _export
@@ -71,6 +82,10 @@
 
 #ifndef _import
   #define _import      __declspec(dllimport)
+#endif
+
+#ifndef _USERENTRY
+  #define _USERENTRY   __cdecl
 #endif
 
 #define MAKEWP(lo,hi)  ((WPARAM)MAKELONG(lo,hi))
@@ -108,18 +123,17 @@ typedef unsigned long  ulong;          // Unsigned long
 // oddata.
 
 #ifdef __cplusplus
-  #define _USERENTRY     __cdecl
-  #define extc           extern "C"
-  #define stdapi(type)   extern "C" type __stdcall
-  #define varapi(type)   extern "C" type __cdecl
-  #define oddata(type)   extern "C" const _import type
-  #define pentry(type)   extern "C" _export type cdecl
+  #define extc         extern "C" _export
+  #define stdapi(type) extern "C"               type __cdecl
+  #define varapi(type) extern "C"               type __cdecl
+  #define oddata(type) extern "C" const _import type
+  #define pentry(type) extern "C" _export       type __cdecl
 #else
-  #define extc
-  #define stdapi(type)   extern type __stdcall
-  #define varapi(type)   extern type __cdecl
-  #define oddata(type)   extern const _import type
-  #define pentry(type)   extern type _export cdecl
+  #define extc         extern     _export
+  #define stdapi(type) extern                   type __cdecl
+  #define varapi(type) extern                   type __cdecl
+  #define oddata(type) extern     const _import type
+  #define pentry(type) extern     _export       type __cdecl
 #endif
 
 
@@ -247,6 +261,7 @@ stdapi (int)     Utftounicode(const char *t,int nt,wchar_t *w,int nw);
 stdapi (HGLOBAL) Unicodebuffertoascii(HGLOBAL hunicode);
 stdapi (int)     Iszero(void *data,int n);
 stdapi (int)     Guidtotext(uchar *guid,wchar_t *s);
+varapi (int)     Swprintf(wchar_t *s,wchar_t *format,...);
 stdapi (void *)  Memalloc(ulong size,int flags);
 stdapi (void)    Memfree(void *data);
 stdapi (void *)  Mempurge(void *data,int count,ulong itemsize,int *newcount);
@@ -267,7 +282,8 @@ stdapi (int)     Simpleaddress(wchar_t *text,ulong addr,
                    uchar *mask,int *select);
 stdapi (void)    Heapsort(void *data,const int count,const int size,
                    int (_USERENTRY *compare)(const void *,const void *));
-stdapi (void)    Heapsortex(void *data,const int count,const int size, int (_USERENTRY *compareex)(const void *,const void *,ulong),
+stdapi (void)    Heapsortex(void *data,const int count,const int size,
+                   int (_USERENTRY *compareex)(const void *,const void *,ulong),
                    ulong lp);
 stdapi (uchar *) Readfile(wchar_t *path,ulong fixsize,ulong *psize);
 stdapi (int)     Devicenametodosname(wchar_t *devname,wchar_t *dosname);
@@ -1731,6 +1747,10 @@ typedef struct t_scheme {              // Descriptor of colour scheme
   HPEN           ulpen;                // Pen to underline text
 } t_scheme;
 
+stdapi (int)     Getmonitorrect(int x,int y,RECT *rc);
+stdapi (void)    Sunkenframe(HDC dc,RECT *rc,int flags);
+stdapi (int)     Findstockobject(ulong gdihandle,wchar_t *name,int nname);
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// MEMORY FUNCTIONS ///////////////////////////////
@@ -2893,7 +2913,7 @@ typedef struct t_emu {                 // Parameters passed to emulation routine
 } t_emu;
 
 typedef void TRACEFUNC(ulong *,ulong *,t_predict *,t_disasm *);
-typedef void cdecl EMUFUNC(t_emu *,t_reg *);
+typedef void __cdecl EMUFUNC(t_emu *,t_reg *);
 
 typedef struct t_bincmd {              // Description of 80x86 command
   wchar_t        *name;                // Symbolic name for this command
@@ -3246,10 +3266,7 @@ typedef struct t_rawdata {             // Header of raw data block
   ulong          size;                 // Data size, bytes
   ulong          hasmask;              // Data is followed by mask
   ulong          features;             // Data features
-  #ifdef __cplusplus
-  uchar          data[0];              // Data & mask immediately follow header
-  #endif
-} t_rawdata;
+} t_rawdata;                           // Data & mask immediately follow header
 
 typedef struct t_argloc {              // Information about stack args & locals
   ulong          fntype;               // Calling convention, set of FN_xxx
@@ -4196,16 +4213,13 @@ oddata (wchar_t *) sizeatt[17];        // Keywords for immediate data, AT&T
 
 /////////////////////////////// OLLYDBG SETTINGS ///////////////////////////////
 
-/*
-    Force the _symbol, in order to be OK with VS when compiling
-*/
 oddata (wchar_t) ollyfile[MAXPATH];    // Path to OllyDbg
-oddata (wchar_t) _ollydir[MAXPATH];     // OllyDbg directory w/o backslash
+oddata (wchar_t) ollydir[MAXPATH];     // OllyDbg directory w/o backslash
 oddata (wchar_t) systemdir[MAXPATH];   // Windows system directory
 oddata (wchar_t) plugindir[MAXPATH];   // Plugin data dir without backslash
 
 oddata (HINSTANCE) hollyinst;          // Current OllyDbg instance
-oddata (HWND)    _hwollymain;           // Handle of the main OllyDbg window
+oddata (HWND)    hwollymain;           // Handle of the main OllyDbg window
 oddata (HWND)    hwclient;             // Handle of MDI client or NULL
 oddata (wchar_t) ottable[SHORTNAME];   // Class of table windows
 oddata (ulong)   cpufeatures;          // CPUID feature information
@@ -4308,3 +4322,4 @@ pentry (void)    ODBG2_Pluginuddrecord(t_module *pmod,int ismainmodule,
 pentry (void)    ODBG2_Pluginreset(void);
 pentry (int)     ODBG2_Pluginclose(void);
 pentry (void)    ODBG2_Plugindestroy(void);
+

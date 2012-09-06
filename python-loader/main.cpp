@@ -16,7 +16,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 /*
     This routine is required by the OllyDBG plugin engine! 
 */
-pentry (int) ODBG2_Pluginquery(int ollydbgversion, ulong *features, wchar_t pluginname[SHORTNAME], wchar_t pluginversion[SHORTNAME])
+extc int __cdecl ODBG2_Pluginquery(int ollydbgversion, ulong *features, wchar_t pluginname[SHORTNAME] ,wchar_t pluginversion[SHORTNAME])
 {
     // Yeah, the plugin interface in the v1/v2 are different
     if(ollydbgversion < 201)
@@ -29,7 +29,7 @@ pentry (int) ODBG2_Pluginquery(int ollydbgversion, ulong *features, wchar_t plug
     // Initialize the python environment, prepare the hooks
     Py_Initialize();
 
-    std::wstring pathW(_ollydir);
+    std::wstring pathW(ollydir);
     pathW += L"\\hook.py";
 
     Addtolist(0x31337, WHITE, L"[python-loader] Preparing to hook stdout/stderr of the python environment (%s)..", pathW.c_str());
@@ -43,7 +43,7 @@ pentry (int) ODBG2_Pluginquery(int ollydbgversion, ulong *features, wchar_t plug
     return PLUGIN_VERSION;
 }
 
-pentry (void) ODBG2_Plugindestroy(void)
+extc void __cdecl ODBG2_Plugindestroy(void)
 {
     // Properly ends the python environment
     Py_Finalize();
@@ -52,7 +52,7 @@ pentry (void) ODBG2_Plugindestroy(void)
 /*
     Adds items to OllyDbgs menu system.
 */
-extc _export t_menu* cdecl ODBG2_Pluginmenu(wchar_t* type)
+extc t_menu * __cdecl ODBG2_Pluginmenu(wchar_t *type)
 {
     if(wcscmp(type, PWM_MAIN) == 0)
         return g_MainMenu;
@@ -66,7 +66,7 @@ void spawn_window(void)
     OPENFILENAME ofn = {0};
 
     ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = _hwollymain;
+    ofn.hwndOwner = hwollymain;
     ofn.lpstrFile = file_path;
     // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
     // use the contents of szFile to initialize itself.
@@ -99,7 +99,7 @@ int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode)
             case MENU_ABOUT_IDX:
             {
                 MessageBox(
-                    _hwollymain,
+                    hwollymain,
                     L"python loader",
                     L"About python-loader",
                     MB_OK| MB_ICONINFORMATION

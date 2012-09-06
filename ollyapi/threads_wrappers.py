@@ -23,15 +23,15 @@ from common import *
 from threads_constants import *
 
 # stdapi (void) Resumeallthreads(void);
-Resumeallthreads_TYPE = WINFUNCTYPE(None)
+Resumeallthreads_TYPE = CFUNCTYPE(None)
 Resumeallthreads  = Resumeallthreads_TYPE(resolve_api('Resumeallthreads'))
 
 # stdapi (t_reg *) Threadregisters(ulong threadid);
-Threadregisters_TYPE = WINFUNCTYPE(t_reg_p, c_ulong)
+Threadregisters_TYPE = CFUNCTYPE(t_reg_p, c_ulong)
 Threadregisters = Threadregisters_TYPE(resolve_api('Threadregisters'))
 
 # stdapi (ulong) Getcputhreadid(void);
-Getcputhreadid_TYPE = WINFUNCTYPE(c_ulong)
+Getcputhreadid_TYPE = CFUNCTYPE(c_ulong)
 Getcputhreadid = Getcputhreadid_TYPE(resolve_api('Getcputhreadid'))
 
 def ResumeAllThreads():
