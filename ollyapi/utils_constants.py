@@ -583,9 +583,9 @@ NOPERAND = 4
 class t_disasm(Structure):
     """
     Disassembled command
-    Size: 6348bytes
+    Size: 6352bytes
     """
-    _pack_ = 4
+    _pack_ = 1
     _fields_ = [
         # In the case that DA_HILITE flag is set, fill these members before calling
         # Disasm(). Parameter hilitereg has priority over hiliteindex.
@@ -603,6 +603,8 @@ class t_disasm(Structure):
         ('ip', c_ulong),
         # Full length of command, bytes
         ('size', c_ulong),
+        # More features, set of DX_xxx
+        ('exttype', c_ulong),
         # Type of command, D_xxx
         ('cmdtype', c_ulong),
         # List of prefixes, set of PF_xxx
