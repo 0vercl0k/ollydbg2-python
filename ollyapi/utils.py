@@ -191,6 +191,9 @@ def FindHex(s, address_start = None):
     """
     Find hexadecimal values like E9??FF?A??
     The '?' is a wildcard for one nibbles ; that idea comes from the excellent ODBG scripting language
+
+    Note: This function try to find an hexadecimal pattern only in one page of the memory (either in address_start's page
+    or in EIP's page)
     """
 
     def hex_matched(data, s):
@@ -249,14 +252,13 @@ def FindHex(s, address_start = None):
 
     # get information about the memory block
     mem_info = memory.FindMemory(address_start).contents
-
+    
     size_mem_block = mem_info.size - (address_start - mem_info.base)
     offset, found = 0, False
     nb_bytes = len(s) / 2
 
     while offset < (size_mem_block - nb_bytes) and found == False:
         data = memory.ReadMemory(nb_bytes, address_start + offset)
-        
         if hex_matched(data, s):
             found = True
         else:
