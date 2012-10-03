@@ -187,7 +187,7 @@ def FindInstr(instr, address_start = None):
 
     return 0
 
-def FindHex(s, address_start = None):
+def FindHexInPage(s, address_start = None):
     """
     Find hexadecimal values like E9??FF?A??
     The '?' is a wildcard for one nibbles ; that idea comes from the excellent ODBG scripting language

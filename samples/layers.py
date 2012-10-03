@@ -33,7 +33,7 @@ def main():
         if pattern != unhexlify(pattern_layer):
             are_we_done = True
         else:
-            end_current_layer = FindHex('E2FA') # LOOP
+            end_current_layer = FindHexInPage('E2FA') # LOOP
             assert(end_current_layer != 0)
 
             b = HardwareBreakpoint(end_current_layer + 2)

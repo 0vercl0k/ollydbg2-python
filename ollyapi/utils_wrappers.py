@@ -63,6 +63,10 @@ Assembleallforms = Assembleallforms_TYPE(resolve_api('Assembleallforms'))
 Comparecommand_TYPE = CFUNCTYPE(c_ulong, c_char_p, c_ulong, c_ulong, t_asmmod_p, c_int, c_int_p, c_int_p, t_disasm_p)
 Comparecommand = Comparecommand_TYPE(resolve_api('Comparecommand'))
 
+# stdapi (int) Getanalysercomment(struct t_module *pmod,ulong addr,wchar_t *comment,int len);
+Getanalysercomment_TYPE = CFUNCTYPE(c_int, t_module_p, c_ulong, c_wchar_p, c_int)
+Getanalysercomment = Getanalysercomment_TYPE(resolve_api('Getanalysercomment'))
+
 def InsertNameW(addr, type_, s):
     """
     That function is used to add label and comment directly on the disassembly
@@ -210,3 +214,17 @@ def CompareCommand(cmd, cmdsize, cmdip, model, nmodel):
         c_int_p(i2),
         t_disasm_p(dis)
     )
+
+def GetAnalyserComment(addr):
+    """
+    Get an analyser comment with an address
+    """
+    buf = (c_wchar * 100)()
+    r = Getanalysercomment(
+        cast(None, t_module_p),
+        c_ulong(addr),
+        buf,
+        c_int(100)
+    )
+
+    return buf.value
