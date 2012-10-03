@@ -233,15 +233,3 @@ class MemoryBreakpoint(Breakpoint):
         if self.state == 'Enabled':
             RemoveMemoryBreakpoin(self.address)
             self.state = 'Disabled'
-
-    def goto(self):
-        """
-        The goto function isn't really doable with a memorybreakpoint for a simple reason:
-            -> the address where you set your breakpoint isn't the address where the exception
-            is going to be fired!
-
-        Example:
-            if you set a memory breakpoint on 0x1337 on 'rw', you want to catch where this memory
-            area is accessed, but this access won't be at EIP=0x1337
-        """
-        raise Exception('Cannot goto in memory bp')
