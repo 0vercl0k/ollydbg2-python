@@ -39,7 +39,7 @@ def main():
 
     print 'Seems to be decrypted in this loop, goto the end of the loop'
     bp_loop = SoftwareBreakpoint(0x0401370, '[ESP+1C] == EAX')
-    bp_loop.goto()
+    Run()
     bp_loop.remove()
 
     print 'Dumping the size of the string on the stack..'

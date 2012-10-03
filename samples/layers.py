@@ -37,7 +37,7 @@ def main():
             assert(end_current_layer != 0)
 
             b = HardwareBreakpoint(end_current_layer + 2)
-            b.goto()
+            Run()
             b.remove()
             n_layers += 1
 

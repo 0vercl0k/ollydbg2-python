@@ -23,94 +23,19 @@ from breakpoints_constants import *
 import utils
 import threads
 
-def bps_set(address, bp_type = BP_BREAK | BP_MANUAL):
+def bpm_set(address, flags, size = 1, condi = ''):
     """
-    Set a classical software breakpoint:
-    Pause each time the breakpoint is reached.
+    Set a memory breakpoint
     """
-    return SetInt3Breakpoint(address, bp_type)
+    print flags + ' %#.8x' % flags_to_bp_type(flags, condi != '')
 
-def bps_goto(address):
+
+def bpmc_set(address, flags, condi, size = 1):
     """
-    Set a software one-shot breakpoint at address, and
-    run the process.
+    Set a conditional memory breakpoint
     """
-    bps_set(address, OneShotBreakpoint)
-    utils.Run()
+    return bpm_set(address, flags, size, condi)
 
-def bpsc_set(address, cond, bp_type = BP_MANUAL):
-    """
-    Set a software conditional breakpoint
-
-    Note: it doesn't seem possible to have a software conditional OneShotBreakpoint 
-    """
-    return SetInt3Breakpoint(
-        address,
-        bp_type | BP_CONDBREAK | BP_COND,
-        condition = cond
-    )
-
-def flags_to_hardwarebp_type(flags, is_conditional_bp = False):
-    """
-    Translate the flags 'rwx' in the proper hardware breakpoint types
-    used internaly by OllyDbg
-    """
-    assert(flags in ['rw', 'w', 'wr', 'x'])
-
-    # converting the flags into valid breakpoint type
-    type_dword = BP_MANUAL | BP_BREAK
-    if 'r' in flags:
-        type_dword |= BP_READ
-
-    if 'w' in flags:
-        type_dword |= BP_WRITE
-
-    if 'x' in flags:
-        type_dword |= BP_EXEC
-
-    if is_conditional_bp != '':
-        type_dword |= BP_COND
-
-    # ensure the size is 1byte if this is an execution breakpoint
-    if type_dword == ExecutionBreakpoint or type_dword == ExecutionBreakpoint | BP_COND:
-        size = 1
-
-    return type_dword
-
-def bph_set(address, flags, size = 1, slot = 0, condi = ''):
-    """
-    Set a hardware breakpoint
-    """
-
-    assert(size in [1, 2, 4])
-    assert(slot in [0, 1, 2, 3])
-
-    r = SetHardBreakpoint(
-        address,
-        slot,
-        size,
-        flags_to_hardwarebp_type(flags, condi != ''),
-        0,
-        0,
-        0,
-        condi,
-        '',
-        ''
-    )
-
-    return r
-
-def bphc_set(address, flags, condi, size = 1, slot = 0):
-    """
-    Set a conditional hardware breakpoint
-    """
-    return bph_set(
-        address,
-        flags,
-        size,
-        slot,
-        condi
-    )
 
 # WE NEED ABSTRACTION MAN
 
@@ -160,12 +85,36 @@ class Breakpoint(object):
         """
         pass
 
-    def goto(self, pass_exception = 0):
+    @staticmethod
+    def flags_to_bp_type(flags, is_conditional_bp = False):
         """
-        Run the executable until we reach our breakpoint
+        Translate the 'rwx' in stuff that olly understands
         """
-        while threads.GetEip() != self.address:
-            utils.Run(utils.STAT_RUNNING, pass_exception)
+        # remove duplicate letter
+        flags = ''.join(set(flags))
+
+        # now ensure the maximum you can do is 'rwx'
+        assert(len(flags) < 4)
+
+        # we want only 'r', 'w' & 'x' in the flags
+        assert(filter(lambda x: x in ['r', 'w', 'x'], flags) != [])
+
+        # converting the flags into valid breakpoint type
+        type_dword = BP_MANUAL | BP_BREAK
+        if 'r' in flags:
+            type_dword |= BP_READ
+
+        if 'w' in flags:
+            type_dword |= BP_WRITE
+
+        if 'x' in flags:
+            type_dword |= BP_EXEC
+
+        if is_conditional_bp != '':
+            type_dword |= BP_COND
+
+        return type_dword
+
 
 class SoftwareBreakpoint(Breakpoint):
     """
@@ -186,12 +135,16 @@ class SoftwareBreakpoint(Breakpoint):
         self.enable()
 
     def enable(self):
-        if self.is_conditional_bp:
-            bpsc_set(self.address, self.condition, self.type)
-        else:
-            bps_set(self.address, self.type)
+        if self.state != 'Enabled':
 
-        self.state = 'Enabled'
+            r = SetInt3Breakpoint(
+                self.address,
+                self.type,
+                condition = self.condition
+            )
+
+            self.state = 'Enabled'
+            return r
 
     def remove(self):
         # we remove the breakpoint only if it is enabled
@@ -207,15 +160,28 @@ class HardwareBreakpoint(Breakpoint):
         - do not use .goto() if you have a read/write bp, because you don't know where
         the breakpoint is going to be hit
     """
-    def __init__(self, address, flags = 'x', size = 1, slot = None, condition = None):
+    def __init__(self, address, flags = 'x', size = 1, condition = None, slot = None):
         # init internal state of the breakpoint
         super(HardwareBreakpoint, self).__init__(address, flags, condition)
 
-        # keep in memory the flags view like 'rw' breakpoint, but translate it into something
-        # ollydbg understands
-        self.internal_type = flags_to_hardwarebp_type(self.type, self.is_conditional_bp)
+        assert(size in [1, 2, 4])
+
+        # DR7 allows only 3 types of HWBP:
+        #  -> on execution (00b)
+        #  -> data write (01b)
+        #  -> data read or write (11b)
+        assert(flags in ['rw', 'w', 'wr', 'x'])
+
+        # ensure the size is 1byte if this is an execution breakpoint
+        if flags == 'x' :
+            size = 1
 
         self.size = size
+
+        # keep in memory the flags view like 'rw' breakpoint, but translate it into something
+        # ollydbg understands
+        self.internal_type = Breakpoint.flags_to_bp_type(self.type, self.is_conditional_bp)
+
         self.slot = slot if slot != None else FindFreeHardbreakSlot(self.internal_type)
         if self.slot == -1:
             raise Exception('You have used all the available slot')
@@ -223,14 +189,59 @@ class HardwareBreakpoint(Breakpoint):
         self.enable()
 
     def enable(self):
-        if self.is_conditional_bp:
-            bphc_set(self.address, self.type, self.condition, self.size, self.slot)
-        else:
-            bph_set(self.address, self.type, self.size, self.slot)
+        if self.state != 'Enabled':
+            r = SetHardBreakpoint(
+                self.address,
+                self.slot,
+                self.size,
+                self.internal_type,
+                condition = self.condition
+            )
 
-        self.state = 'Enabled'
+            self.state = 'Enabled'
+            return r
 
     def remove(self):
         if self.state == 'Enabled':
             RemoveHardbreapoint(self.slot)
             self.state = 'Disabled'
+
+class MemoryBreakpoint(Breakpoint):
+    """
+    A class to manipulate memory breakpoints
+    """
+    def __init__(self, address, flags = 'x', size = 1, condition = ''):
+        super(MemoryBreakpoint, self).__init__(address, flags, condition)
+        self.internal_type = Breakpoint.flags_to_bp_type(self.type, self.is_conditional_bp)
+        self.size = size
+
+        self.enable()
+
+    def enable(self):
+        if self.state != 'Enabled':
+            r = SetMemoryBreakpoint(
+                self.address,
+                self.size,
+                self.internal_type,
+                condition = ''
+            )
+
+            self.state = 'Enabled'
+            return r
+
+    def remove(self):
+        if self.state == 'Enabled':
+            RemoveMemoryBreakpoin(self.address)
+            self.state = 'Disabled'
+
+    def goto(self):
+        """
+        The goto function isn't really doable with a memorybreakpoint for a simple reason:
+            -> the address where you set your breakpoint isn't the address where the exception
+            is going to be fired!
+
+        Example:
+            if you set a memory breakpoint on 0x1337 on 'rw', you want to catch where this memory
+            area is accessed, but this access won't be at EIP=0x1337
+        """
+        raise Exception('Cannot goto in memory bp')

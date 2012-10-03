@@ -27,7 +27,7 @@ def main():
 
     print 'Found at %#.8x, goto this address!' % addr
     bp_popad = HardwareBreakpoint(addr) # yeah, hardware breakpoints work too!
-    bp_popad.goto()
+    Run()
     bp_popad.remove()
 
     print 'Now, looking for the JMP OEP..'
@@ -36,7 +36,7 @@ def main():
 
     print 'Found at %#.8x, goto this address!' % addr
     bp_jmp = SoftwareBreakpoint(addr)
-    bp_jmp.goto()
+    Run()
     bp_jmp.remove()
 
     print 'Final move, step to the OEP'

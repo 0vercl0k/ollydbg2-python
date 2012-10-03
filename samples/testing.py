@@ -41,7 +41,9 @@ def main():
     strcmp_address = ResolveApiAddress('msvcrt', 'strcmp')
 
     print 'Located at %#.8x, Lets go!' % strcmp_address
-    bps_goto(strcmp_address)
+    bp = SoftwareBreakpoint(strcmp_address)
+    Run()
+    bp.remove()
 
     print 'Dumping the address of the password on the stack ([ARG2])'
     pp_pass = GetEsp() + 4 + 4

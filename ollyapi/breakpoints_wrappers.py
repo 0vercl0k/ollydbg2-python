@@ -41,6 +41,14 @@ Removehardbreakpoint = Removehardbreakpoint_TYPE(resolve_api('Removehardbreakpoi
 Findfreehardbreakslot_TYPE = CFUNCTYPE(c_int, c_ulong)
 Findfreehardbreakslot = Findfreehardbreakslot_TYPE(resolve_api('Findfreehardbreakslot'))
 
+# stdapi (int) Removemembreakpoint(ulong addr);
+Removemembreakpoint_TYPE = CFUNCTYPE(c_ulong)
+Removemembreakpoint = Removemembreakpoint_TYPE(resolve_api('Removemembreakpoint'))
+
+# stdapi (int) Setmembreakpoint(ulong addr,ulong size,ulong type, int limit,int count,wchar_t *condition, wchar_t *expression,wchar_t *exprtype);
+Setmembreakpoint_TYPE = CFUNCTYPE(c_int, c_ulong, c_ulong, c_ulong, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
+Setmembreakpoint = Setmembreakpoint_TYPE(resolve_api('Setmembreakpoint'))
+
 def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):
     """
     Python wrapper for the Setint3breakpoint function
@@ -93,3 +101,24 @@ def FindFreeHardbreakSlot(type_):
     Find a free slot to put your hardware breakpoint
     """
     return Findfreehardbreakslot(c_ulong(type_))
+
+def SetMemoryBreakpoint(address, size = 1, type_ = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):
+    """
+    Set a memory breakpoint
+    """
+    return Setmembreakpoint(
+        c_ulong(address),
+        c_ulong(size),
+        c_ulong(type_),
+        c_int(limit),
+        c_int(count),
+        c_wchar_p(condition),
+        c_wchar_p(expression),
+        c_wchar_p(exprtype)
+    )
+
+def RemoveMemoryBreakpoint(addr):
+    """
+    Remove a memory breakpoint
+    """
+    return Removemembreakpoint(c_ulong(addr))

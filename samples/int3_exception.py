@@ -23,10 +23,14 @@ from ollyapi import *
 def main():
     print 'OK, you have a classic int3 anti-dbg ; you must pass the exception!'
     bp = SoftwareBreakpoint(0x00401044)
-    bp.goto(1)
+    # Run, we will hit the first int3
+    Run()
 
-    print 'Here you go!'
+    # Now we are on the int3, we can pass the exception to olly
+    Run(pass_exception = 1)
     bp.remove()
+    
+    print 'Here you go!'
     return 1
 
 if __name__ == '__main__':

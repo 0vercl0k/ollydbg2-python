@@ -29,7 +29,7 @@ def main():
 
     print 'Found at %#.8x, goto this address!' % addr
     bp = SoftwareBreakpoint(addr)
-    bp.goto()
+    Run()
     bp.remove()
 
     print 'Final move, step to the OEP'
