@@ -42,10 +42,11 @@ def walk_stack(nb_max_frame = 5, nb_args = 4):
         if (sebp - (ebp + 8)) >= nb_args*4:
             args = [ReadDwordMemory(i) for i in range(ebp + 8, ebp + 8 + 4*nb_args, 4)]
 
+        symbol = GetSymbolFromAddress(seip)
         frames_info.append({
             'return-address' : seip,
             'address' : sebp + 4,
-            'symbol' : GetAnalyserComment(0x0028FEFC),
+            'symbol' : symbol if symbol != None else 'no symbol found',
             'args' : args
         })
 
@@ -53,13 +54,13 @@ def walk_stack(nb_max_frame = 5, nb_args = 4):
 
     return frames_info
 
-def main():
+def main():   
     call_stack = walk_stack()
-    print "You're currently at %#.8x, this is the calling stack:" % GetEip()
+    print "You're currently at %#.8x (%s), this is the calling stack:" % (GetEip(), GetSymbolFromAddress(GetEip()))
     for i in range(len(call_stack)):
         c = call_stack[i]
         ri = len(call_stack) - i
-        print ' ' * (ri) + '#%d %#.8x(%s) (found @%#.8x) %s' % (ri, c['return-address'], ','.join('%#.8x' % i for i in c['args']), c['address'], c['symbol'])
+        print '#%d %#.8x : %s (found @%#.8x)' % (ri, c['return-address'], c['symbol'], c['address'])
     return 1
 
 if __name__ == '__main__':

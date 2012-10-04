@@ -67,6 +67,10 @@ Comparecommand = Comparecommand_TYPE(resolve_api('Comparecommand'))
 Getanalysercomment_TYPE = CFUNCTYPE(c_int, t_module_p, c_ulong, c_wchar_p, c_int)
 Getanalysercomment = Getanalysercomment_TYPE(resolve_api('Getanalysercomment'))
 
+# stdapi (int) Getproccomment(ulong addr,ulong acall,wchar_t *comment,int len,int argonly);
+Getproccomment_TYPE = CFUNCTYPE(c_int, c_ulong, c_ulong, c_wchar_p, c_int, c_int)
+Getproccomment = Getproccomment_TYPE(resolve_api('Getproccomment'))
+
 def InsertNameW(addr, type_, s):
     """
     That function is used to add label and comment directly on the disassembly
@@ -218,6 +222,9 @@ def CompareCommand(cmd, cmdsize, cmdip, model, nmodel):
 def GetAnalyserComment(addr):
     """
     Get an analyser comment with an address
+
+    Example of comment you can retrieved:
+
     """
     buf = (c_wchar * 100)()
     r = Getanalysercomment(
@@ -225,6 +232,24 @@ def GetAnalyserComment(addr):
         c_ulong(addr),
         buf,
         c_int(100)
+    )
+
+    return buf.value
+
+def GetProcComment(addr, acall = 0, argonly = 0):
+    """
+    Get comment generated for a specific Procedure
+
+    Example of comment:
+        004017A0  /$  55            PUSH EBP                                 ; breakpoints.004017A0(guessed void)
+    """
+    buf = (c_wchar * 100)()
+    r = Getproccomment(
+        c_ulong(addr),
+        c_ulong(acall),
+        buf,
+        c_int(100),
+        c_int(argonly)
     )
 
     return buf.value

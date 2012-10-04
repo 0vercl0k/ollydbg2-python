@@ -22,6 +22,7 @@ from ctypes import *
 
 kernel32 = windll.kernel32
 c_int_p = POINTER(c_int)
+c_longlong_p = POINTER(c_longlong)
 
 wcsncpy = cdll.msvcrt.wcsncpy
 memset  = cdll.msvcrt.memset
@@ -29,7 +30,7 @@ memset  = cdll.msvcrt.memset
 # Max length of text string incl. '\0'
 TEXTLEN = 256
 
-MAXPATH = 260
+MAXPATH = MAX_PATH = 260
 
 # Number of registers (of any type)
 NREG = 8
@@ -40,13 +41,13 @@ SHORTNAME = 32
 # Total count of resisters & pseudoregs
 NPSEUDO = (NREG+3)
 
-def resolve_api(n):
+def resolve_api(n, mod = None):
     """
     Retrieve dynamically the function address exported
     by OllyDbg
     """
     addr = kernel32.GetProcAddress(
-        kernel32.GetModuleHandleA(0),
+        kernel32.GetModuleHandleA(0 if mod == None else c_char_p(mod)),
         n
     )
     assert(addr != 0)
