@@ -21,12 +21,12 @@
 from ctypes import *
 from common import *
 
-# stdapi (int) Setint3breakpoint(ulong addr, ulong type, int fnindex, int limit, int count, wchar_t *condition, wchar_t *expression, wchar_t *exprtype);
-Setint3breakpoint_TYPE = CFUNCTYPE(c_int, c_ulong, c_ulong, c_int, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
+# stdapi (int) Setint3breakpoint(ulong addr, ulong type, int fnindex, int limit, int count, ulong actions, wchar_t *condition, wchar_t *expression, wchar_t *exprtype);
+Setint3breakpoint_TYPE = CFUNCTYPE(c_int, c_ulong, c_ulong, c_int, c_int, c_int, c_ulong, c_wchar_p, c_wchar_p, c_wchar_p)
 Setint3breakpoint = Setint3breakpoint_TYPE(resolve_api('Setint3breakpoint'))
 
-# stdapi (int) Sethardbreakpoint(int index,ulong size,ulong type,int fnindex,ulong addr,int limit,int count,wchar_t *condition,wchar_t *expression,wchar_t *exprtype);
-Sethardbreakpoint_TYPE = CFUNCTYPE(c_int, c_int, c_ulong, c_ulong, c_int, c_ulong, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
+# stdapi (int) Sethardbreakpoint(int index,ulong size,ulong type,int fnindex,ulong addr,int limit,int count,ulong actions,wchar_t *condition,wchar_t *expression,wchar_t *exprtype);
+Sethardbreakpoint_TYPE = CFUNCTYPE(c_int, c_int, c_ulong, c_ulong, c_int, c_ulong, c_int, c_int, c_ulong, c_wchar_p, c_wchar_p, c_wchar_p)
 Sethardbreakpoint = Sethardbreakpoint_TYPE(resolve_api('Sethardbreakpoint'))
 
 # stdapi (int) Removeint3breakpoint(ulong addr,ulong type);
@@ -49,7 +49,7 @@ Removemembreakpoint = Removemembreakpoint_TYPE(resolve_api('Removemembreakpoint'
 Setmembreakpoint_TYPE = CFUNCTYPE(c_int, c_ulong, c_ulong, c_ulong, c_int, c_int, c_wchar_p, c_wchar_p, c_wchar_p)
 Setmembreakpoint = Setmembreakpoint_TYPE(resolve_api('Setmembreakpoint'))
 
-def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):
+def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, actions = 0, condition = '', expression = '', exprtype = ''):
     """
     Python wrapper for the Setint3breakpoint function
     """
@@ -59,12 +59,13 @@ def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, c
         c_int(fnindex),
         c_int(limit),
         c_int(count),
+        c_ulong(actions),
         c_wchar_p(condition),
         c_wchar_p(expression),
         c_wchar_p(exprtype)
     )
 
-def SetHardBreakpoint(address, index = 0, size = 0, type_ = 0, fnindex = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):
+def SetHardBreakpoint(address, index = 0, size = 0, type_ = 0, fnindex = 0, limit = 0, count = 0, actions = 0, condition = '', expression = '', exprtype = ''):
     """
     Set a hardware breakpoint
     """
@@ -76,6 +77,7 @@ def SetHardBreakpoint(address, index = 0, size = 0, type_ = 0, fnindex = 0, limi
         c_ulong(address),
         c_int(limit),
         c_int(count),
+        c_ulong(actions),
         c_wchar_p(condition),
         c_wchar_p(expression),
         c_wchar_p(exprtype)

@@ -21,6 +21,7 @@
 from ollyapi import *
 
 # XXX: make the page of the PE header rx if you have EMET installed
+# XXX: Invalided flush cache msgbox -- WTF
 
 def main():
     print 'Looking for the jmp [ebx+c] instruction..'

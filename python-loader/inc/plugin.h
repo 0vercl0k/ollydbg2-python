@@ -18,7 +18,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-#define PLUGIN_VERSION 0x00020003      // Version of plugin interface
+#define PLUGIN_VERSION 0x02010000      // Version 2.01.0000 of plugin interface
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -356,6 +356,7 @@ stdapi (ulong)   Decompress(uchar *bufin,ulong nbufin,
 #define MI_ANALYSIS    0x616E410AL     // Record with analysis data
 #define MI_SWITCH      0x6977530AL     // Switch (addr+dt_switch)
 #define MI_CASE        0x7361430AL     // Case (addr+dt_case)
+#define MI_MNEMO       0x656E4D0AL     // Decoding of mnemonics (addr+dt_mnemo)
 #define MI_JMPDATA     0x74644A0AL     // Jump data
 #define MI_NETSTREAM   0x74734E0AL     // .NET streams (t_netstream)
 #define MI_METADATA    0x74644D0AL     // .NET MetaData tables (t_metadata)
@@ -1222,7 +1223,7 @@ typedef struct sd_pred {               // Descriptor of predicted data
 #define   BP_CONDRET   0x40000000      // Log return value if condition is true
 #define   BP_RET       0xC0000000      // Log return value always
 #define BP_MANMASK (BP_PERIODICAL|BP_BREAKMASK|BP_LOGMASK|BP_ARGMASK|BP_RETMASK)
-#define BP_CONFIRM     TY_CONFIRMED    // Only calls to Setsteppingbreakpoint()
+#define BP_CONFIRM     TY_CONFIRMED    // Internal OllyDbg use
 // Search-related types (used in t_search).
 #define SE_ORIGIN      0x00010000      // Search origin
 #define SE_STRING      0x00020000      // Data contains string address
@@ -1798,6 +1799,7 @@ stdapi (ulong)   Readmemoryex(void *buf,ulong addr,ulong size,int mode,
 stdapi (ulong)   Writememory(const void *buf,ulong addr,ulong size,int mode);
 stdapi (t_memory *) Findmemory(ulong addr);
 stdapi (uchar *) Finddecode(ulong addr,ulong *psize);
+stdapi (int)     Guardmemory(ulong base,ulong size,int guard);
 stdapi (int)     Listmemory(void);
 stdapi (HGLOBAL) Copymemoryhex(ulong addr,ulong size);
 stdapi (int)     Pastememoryhex(ulong addr,ulong size,
@@ -2794,7 +2796,8 @@ typedef struct t_operand {             // Description of disassembled operand
 #define PF_REPMASK     0x00000600      // Mask for repeat prefixes
 #define   PF_REPNE     0x00000200      // 0xF2, REPNE prefix
 #define   PF_REP       0x00000400      // 0xF3, REP/REPE prefix
-#define PF_BYTE        0x00001000      // Size bit in command, used in cmdexec
+#define PF_BYTE        0x00000800      // Size bit in command, used in cmdexec
+#define PF_MUSTMASK    D_MUSTMASK      // Necessary prefixes, used in t_asmmod
 #define PF_66          PF_DSIZE        // Alternative names for SSE prefixes
 #define PF_F2          PF_REPNE
 #define PF_F3          PF_REP
@@ -3408,6 +3411,7 @@ stdapi (int)     Fastexpression(t_result *result,ulong addr,int type,
 #define DIA_JMPLOC     0x00000000      // Show local jumps and calls
 #define DIA_UTF8       0x00800000      // Support for UTF8
 #define DIA_ABSXYPOS   0x10000000      // Use X-Y dialog coordinates as is
+#define DIA_RESTOREPOS 0x20000000      // Restore X-Y dialog coordinates
 
 // Types of controls that can be used in dialogs.
 #define CA_END         0               // End of control list with dialog size
@@ -3566,6 +3570,7 @@ stdapi (int)     Defaultactions(HWND hparent,t_control *pctr,
                    WPARAM wp,LPARAM lp);
 stdapi (void)    Addstringtocombolist(HWND hc,wchar_t *s);
 stdapi (int)     Preparedialog(HWND hw,t_dialog *pdlg);
+stdapi (int)     Endotdialog(HWND hw,int result);
 stdapi (int)     Getregister(HWND hparent,int reg,ulong *data,int letter,
                    int x,int y,int fi,int mode);
 stdapi (int)     Getinteger(HWND hparent,wchar_t *title,ulong *data,int letter,
@@ -3870,6 +3875,11 @@ typedef struct t_patch {
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// BREAKPOINTS //////////////////////////////////
 
+// Actions that must be performed if breakpoint of type BP_ONESHOT or BP_TEMP
+// is hit.
+#define BA_PERMANENT   0x00000001      // Permanent INT3 BP_TEMP on system call
+//#define BA_PLUGIN      0x80000000      // Pass notification to plugin
+
 typedef struct t_bpoint {              // INT3 breakpoints
   ulong          addr;                 // Address of breakpoint
   ulong          size;                 // Must be 1
@@ -3879,6 +3889,7 @@ typedef struct t_bpoint {              // INT3 breakpoints
   uchar          patch;                // Used only in .udd files
   ulong          limit;                // Original pass count (0 if not set)
   ulong          count;                // Actual pass count
+  ulong          actions;              // Actions, set of BA_xxx
 } t_bpoint;
 
 typedef struct t_bpmem {               // Memory breakpoints
@@ -3906,14 +3917,15 @@ typedef struct t_bphard {              // Hardware breakpoints
   int            fnindex;              // Index of predefined function
   ulong          limit;                // Original pass count (0 if not set)
   ulong          count;                // Actual pass count
+  ulong          actions;              // Actions, set of BA_xxx
   ulong          modbase;              // Module base, used by .udd only
   wchar_t        path[MAXPATH];        // Full module name, used by .udd only
 } t_bphard;
 
 stdapi (int)     Removeint3breakpoint(ulong addr,ulong type);
 stdapi (int)     Setint3breakpoint(ulong addr,ulong type,int fnindex,
-                   int limit,int count,wchar_t *condition,
-                   wchar_t *expression,wchar_t *exprtype);
+                   int limit,int count,ulong actions,
+                   wchar_t *condition,wchar_t *expression,wchar_t *exprtype);
 stdapi (int)     Enableint3breakpoint(ulong addr,int enable);
 stdapi (int)     Confirmint3breakpoint(ulong addr);
 stdapi (int)     Confirmhardwarebreakpoint(ulong addr);
@@ -3926,7 +3938,7 @@ stdapi (int)     Setmembreakpoint(ulong addr,ulong size,ulong type,
 stdapi (int)     Enablemembreakpoint(ulong addr,int enable);
 stdapi (int)     Removehardbreakpoint(int index);
 stdapi (int)     Sethardbreakpoint(int index,ulong size,ulong type,int fnindex,
-                   ulong addr,int limit,int count,
+                   ulong addr,int limit,int count,ulong actions,
                    wchar_t *condition,wchar_t *expression,wchar_t *exprtype);
 stdapi (int)     Enablehardbreakpoint(int index,int enable);
 stdapi (int)     Findfreehardbreakslot(ulong type);

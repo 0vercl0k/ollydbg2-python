@@ -20,6 +20,8 @@
 #
 from ollyapi import *
 
+# XXX: you must restart the script, to set correctly the arguments
+
 def main():
     print 'Aight, ready for the demonstration'
     print 'First, here are the CPU register of the process:'

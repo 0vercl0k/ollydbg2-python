@@ -31,7 +31,7 @@ def main():
     bp_popad.remove()
 
     print 'Now, looking for the JMP OEP..'
-    addr = FindHex('E9????????')
+    addr = FindHexInPage('E9????????')
     assert(addr != 0)
 
     print 'Found at %#.8x, goto this address!' % addr

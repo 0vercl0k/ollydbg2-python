@@ -23,20 +23,6 @@ from breakpoints_constants import *
 import utils
 import threads
 
-def bpm_set(address, flags, size = 1, condi = ''):
-    """
-    Set a memory breakpoint
-    """
-    print flags + ' %#.8x' % flags_to_bp_type(flags, condi != '')
-
-
-def bpmc_set(address, flags, condi, size = 1):
-    """
-    Set a conditional memory breakpoint
-    """
-    return bpm_set(address, flags, size, condi)
-
-
 # WE NEED ABSTRACTION MAN
 
 class Breakpoint(object):
