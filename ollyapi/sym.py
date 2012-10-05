@@ -26,8 +26,9 @@ import threads
 def GetSymbolFromAddress(address):
     """
     Retrieve symbol information from an address
+    
     Example:
-    GetSymbolFromAddress(0x) = ntdll!Kibla+0xdd
+    GetSymbolFromAddress(0x778de752) = ntdll!RtlAnsiStringToUnicodeString+0x0000007d
     """
     handle_process = threads.GetProcessHandle()
     address_info = SymFromAddr(handle_process, address)
@@ -35,8 +36,7 @@ def GetSymbolFromAddress(address):
     
     if address_info != None:
         symbol_name, offset = address_info['s'], address_info['displacement'].value
-        print address_info['struct'].ModBase
-        module_info = SymGetModuleInfo64(handle_process, address_info['struct'].ModBase)
+        module_info = SymGetModuleInfo64(handle_process, address)
 
         if module_info != None:
             s = '%s!%s+%#.8x' % (module_info.ModuleName, symbol_name, offset)

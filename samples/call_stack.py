@@ -21,7 +21,7 @@
 
 from ollyapi import *
 
-def walk_stack(nb_max_frame = 5, nb_args = 4):
+def walk_stack(nb_max_frame = 100, nb_args = 4):
     """
     Walk on the stack & generate a call stack
     """
@@ -60,7 +60,7 @@ def main():
     for i in range(len(call_stack)):
         c = call_stack[i]
         ri = len(call_stack) - i
-        print '#%d %#.8x : %s (found @%#.8x)' % (ri, c['return-address'], c['symbol'], c['address'])
+        print '#%.2d %#.8x : %s (found @%#.8x)' % (ri, c['return-address'], c['symbol'], c['address'])
     return 1
 
 if __name__ == '__main__':

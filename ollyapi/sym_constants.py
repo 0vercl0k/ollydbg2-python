@@ -75,9 +75,8 @@ class symbol_info_t(Structure):
         ('Tag', c_ulong),
 
         # The length of the name, in characters, not including the null-terminating character.
-        # Note: http://osdir.com/ml/python.ctypes/2007-03/msg00023.html
         # addr_array = addressof(struct) + sizeof(ULONG) + sizeof(ULONG)
-        # array = (TCHAR * stuct.MaxNameLen).from_addreess(addr_array)
+        # s = string_at(addr_array)
         ('NameLen', c_ulong),
 
         # The size of the Name buffer, in characters.

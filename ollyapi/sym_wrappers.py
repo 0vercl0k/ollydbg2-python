@@ -94,7 +94,7 @@ def SymFromAddr(hProcess, address):
 
     # -4 because of the pad appended after our structure
     addr_s = addressof(buf) + sizeof(symbol_info_t) - 4
-    s = (c_char * p_symbol.contents.NameLen).from_address(addr_s).value
+    s = string_at(addr_s)
 
     return {
         'struct' : p_symbol.contents,
