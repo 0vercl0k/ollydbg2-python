@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-#    sym.py - High level API to play with the Windows Symbol API
+#    sym.py - High level API to play with the Symbol API
 #    Copyright (C) 2012 Axel "0vercl0k" Souchet - http://www.twitter.com/0vercl0k
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -23,12 +23,12 @@ import sys
 from sym_wrappers import *
 import threads
 
-def GetSymbolFromAddress(address):
+def GetSymbolFromAddressMS(address):
     """
-    Retrieve symbol information from an address
+    Retrieve symbol information from an address via the Windows Symbol API
     
     Example:
-    GetSymbolFromAddress(0x778de752) = ntdll!RtlAnsiStringToUnicodeString+0x0000007d
+    GetSymbolFromAddressMS(0x778de752) = ntdll!RtlAnsiStringToUnicodeString+0x0000007d
     """
     handle_process = threads.GetProcessHandle()
     address_info = SymFromAddr(handle_process, address)
@@ -39,8 +39,32 @@ def GetSymbolFromAddress(address):
         module_info = SymGetModuleInfo64(handle_process, address)
 
         if module_info != None:
-            s = '%s!%s+%#.8x' % (module_info.ModuleName, symbol_name, offset)
+            s = '%s.%s+%#.8x' % (module_info.ModuleName, symbol_name, offset)
         else:
             s = '%s+%#.8x' % (symbol_name, offset)
+
+    return s
+
+def GetSymbolFromAddressOlly(address):
+    """
+    Retrieve symbol information from an address via the OllyDBG API
+    
+    Example:
+    GetSymbolFromAddressOlly(0x778de752) =
+    """
+    s = DecodeRelativeOffset(address)
+    if s == None:
+        s = DecodeAddress(address)
+
+    return s
+
+def GetSymbolFromAddress(address):
+    """
+    Try to obtain a symbol via, first the MS API,
+    and if it didn't succeed via the OllyDBG API
+    """
+    s = GetSymbolFromAddressMS(address)
+    if s == None:
+        s = GetSymbolFromAddressOlly(address)
 
     return s

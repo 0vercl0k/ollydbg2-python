@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-#    sym_wrappers.py - Useful wrapper for the Windows Symbol API
+#    sym_wrappers.py - Useful wrapper for the symbols
 #    Copyright (C) 2012 Axel "0vercl0k" Souchet - http://www.twitter.com/0vercl0k
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -55,6 +55,15 @@ Symfromaddr = Symfromaddr_TYPE(resolve_api('SymFromAddr', 'dbghelp.dll'))
 # );
 Symgetmoduleinfo64_TYPE = WINFUNCTYPE(c_long, c_void_p, c_longlong, imagehlp_module64_p)
 Symgetmoduleinfo64 = Symgetmoduleinfo64_TYPE(resolve_api('SymGetModuleInfo64', 'dbghelp.dll'))
+
+
+# stdapi (int) Decodeaddress(ulong addr,ulong amod,int mode,wchar_t *symb,int nsymb,wchar_t *comment);
+Decodeaddress_TYPE = CFUNCTYPE(c_int, c_ulong, c_ulong, c_int, c_wchar_p, c_int, c_wchar_p)
+Decodeaddress = Decodeaddress_TYPE(resolve_api('Decodeaddress'))
+
+# stdapi (int) Decoderelativeoffset(ulong addr,int addrmode,wchar_t *symb,int nsymb);
+Decoderelativeoffset_TYPE = CFUNCTYPE(c_int, c_ulong, c_int, c_wchar_p, c_int)
+Decoderelativeoffset = Decoderelativeoffset_TYPE(resolve_api('Decoderelativeoffset'))
 
 def SymInitialize(hProcess, UserSearchPath = None, fInvadeProcess = True):
     """
@@ -120,3 +129,46 @@ def SymGetModuleInfo64(hProcess, address):
         return None
     
     return img
+
+def DecodeAddress(addr):
+    """
+    Obtain symbol from OllyDBG via an address
+
+    Note: It works only if address is the *exact* address of the function
+    I mean if you're trying to get the symbol of function+1, it won't retrieve anything
+    In this case you have to use DecodeRelativeOffset
+
+    Example:
+    DecodeAddress(0x31337) = binary.function
+    """
+    buf = (c_wchar * 100)()
+    r = Decodeaddress(
+        c_ulong(addr),
+        c_ulong(0),
+        c_int(0x20400),
+        buf,
+        c_int(100),
+        c_wchar_p(None)
+    )
+
+    if r <= 0:
+        return None
+
+    return buf.value
+
+# stdapi (int) Decoderelativeoffset(ulong addr,int addrmode,wchar_t *symb,int nsymb);
+def DecodeRelativeOffset(addr):
+    """
+    """
+    buf = (c_wchar * 100)()
+    r = Decoderelativeoffset(
+        c_ulong(addr),
+        c_int(0x20400),
+        buf,
+        c_int(100)
+    )
+
+    if r <= 0:
+        return None
+
+    return buf.value

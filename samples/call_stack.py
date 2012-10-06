@@ -38,7 +38,7 @@ def walk_stack(nb_max_frame = 100, nb_args = 4):
         if sebp == 0 or seip == 0:
             break
 
-    # if we have a stack-frame big enough to dump nb_arg
+        # if we have a stack-frame big enough to dump nb_arg
         if (sebp - (ebp + 8)) >= nb_args*4:
             args = [ReadDwordMemory(i) for i in range(ebp + 8, ebp + 8 + 4*nb_args, 4)]
 
@@ -54,13 +54,32 @@ def walk_stack(nb_max_frame = 100, nb_args = 4):
 
     return frames_info
 
-def main():   
+def main():
+    # We need to add some symbol to our sample:
+    AddUserLabel(0x00401090, 'main')
+    AddUserLabel(0x00401070, 'f')
+    AddUserLabel(0x00401050, 'zerg')
+    AddUserLabel(0x00401020, 'bla')
+    AddUserLabel(0x00401000, 'r')
+
+    # Goto in the deepest routine
+    b = SoftwareBreakpoint(ResolveApiAddress('call_stack', 'r'))
+    Run()
+    b.remove()
+
+    # now goto deep in printf
+    b = SoftwareBreakpoint(ResolveApiAddress('ntdll', 'RtlEnterCriticalSection'))
+    Run()
+    b.remove()
+
+    # OK now the call stack should be interesting!1!&
     call_stack = walk_stack()
-    print "You're currently at %#.8x (%s), this is the calling stack:" % (GetEip(), GetSymbolFromAddress(GetEip()))
+    print "#%.2d %#.8x : %s" % (len(call_stack), GetEip(), GetSymbolFromAddress(GetEip()))
     for i in range(len(call_stack)):
         c = call_stack[i]
-        ri = len(call_stack) - i
+        ri = len(call_stack) - i - 1
         print '#%.2d %#.8x : %s (found @%#.8x)' % (ri, c['return-address'], c['symbol'], c['address'])
+
     return 1
 
 if __name__ == '__main__':

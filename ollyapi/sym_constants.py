@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-#    sym_constants.py - Structure need to call the Windows Symbol API
+#    sym_constants.py - Structure need to call the Symbol API
 #    Copyright (C) 2012 Axel "0vercl0k" Souchet - http://www.twitter.com/0vercl0k
 #
 #    This program is free software: you can redistribute it and/or modify
