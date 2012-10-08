@@ -85,11 +85,13 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="toolbox.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\plugin.h" />
     <ClInclude Include="main.hpp" />
     <ClInclude Include="toolbox.hpp" />
+    <ClInclude Include="window.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

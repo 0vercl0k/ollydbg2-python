@@ -1,5 +1,6 @@
 #include "main.hpp"
 #include "toolbox.hpp"
+#include "window.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -40,6 +41,14 @@ extc int __cdecl ODBG2_Pluginquery(int ollydbgversion, ulong *features, wchar_t 
     PyRun_SimpleFile(PyFile_AsFile(PyFileObject), pathA.c_str());
 
     Addtolist(0x31337, RED, L"[python-loader] Plugin fully initialized.");
+
+    BOOL ret = CreateCommandLineWindow(hwollymain, g_hinst);
+    if(ret == FALSE)
+    {
+        Addtolist(0x1337, RED, L"[python-loader] CreateCommandLineWindow failed.");
+        return 0;
+    }
+
     return PLUGIN_VERSION;
 }
 
