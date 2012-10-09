@@ -21,7 +21,7 @@ LRESULT CALLBACK CommandLineWinProc(
             // Paint the window's client area.
 
             // Update the position of the window even if the parent window is resized
-            GetWindowRect(GetParent(hwnd), &rect);
+            /*GetWindowRect(GetParent(hwnd), &rect);
 
             width = (rect.right - rect.left) - 10;
             Addtolist(0, RED, L"lolilol\n");
@@ -34,7 +34,7 @@ LRESULT CALLBACK CommandLineWinProc(
                 100,
                 TRUE
             );
-            
+            */
 
             ValidateRect(hwnd, 0);
             return 0; 
@@ -65,8 +65,10 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
     wClass.lpfnWndProc = CommandLineWinProc;
     wClass.hInstance = hInst;
     wClass.lpszClassName = CLI_WINDOW_CLASS_NAME;
+    wClass.hbrBackground = (HBRUSH)16;
 
-    RegisterClass(&wClass);
+    if(RegisterClass(&wClass) == 0)
+        return FALSE;
 
     GetWindowRect(hParent, &rect);
 
@@ -76,12 +78,12 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
     hCmdLine = CreateWindowEx(
         WS_EX_LTRREADING,
         CLI_WINDOW_CLASS_NAME,
-        NULL,
-        WS_CHILD | WS_VISIBLE,
+        L"Command Line Window",
+        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         0,
-        0,//rect.bottom / 2,
-        500,//width,
-        100,
+        rect.bottom - 25,
+        width,
+        50,
         hParent,
         NULL,
         hInst,
@@ -90,8 +92,6 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
 
     if(hCmdLine == NULL)
         return FALSE;
-
- //   SetWindowLong(hCmdLine, GWL_HWNDPARENT, (LONG)hParent);
 
     ShowWindow(hCmdLine, SW_SHOW);
 
