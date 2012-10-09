@@ -8,35 +8,36 @@ LRESULT CALLBACK CommandLineWinProc(
   _In_  LPARAM lParam
 )
 {
-    PRECT rect = NULL;
+    RECT rect = {0};
     DWORD width = 0;
 
     switch (uMsg) 
     { 
         case WM_CREATE: 
-            // Initialize the window. 
+            // Initialize the window.
             return 0; 
  
         case WM_PAINT: 
-            // Paint the window's client area. 
-            return 0; 
- 
-        case WM_SIZING: 
+            // Paint the window's client area.
+
             // Update the position of the window even if the parent window is resized
-            rect = (PRECT)lParam;
-            width = (rect->right - rect->left) - 10;
+            GetWindowRect(GetParent(hwnd), &rect);
+
+            width = (rect.right - rect.left) - 10;
             Addtolist(0, RED, L"lolilol\n");
 
             MoveWindow(
                 hwnd,
                 0,
-                rect->bottom,
+                rect.bottom,
                 width,
-                25,
+                100,
                 TRUE
             );
             
-            return 0;  
+
+            ValidateRect(hwnd, 0);
+            return 0; 
 
         case WM_DESTROY: 
             // Clean up window-specific data objects. 
@@ -59,6 +60,13 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
     HWND hCmdLine;
     RECT rect = {0};
     DWORD width = 0;
+    WNDCLASS wClass = {0};
+
+    wClass.lpfnWndProc = CommandLineWinProc;
+    wClass.hInstance = hInst;
+    wClass.lpszClassName = CLI_WINDOW_CLASS_NAME;
+
+    RegisterClass(&wClass);
 
     GetWindowRect(hParent, &rect);
 
@@ -67,12 +75,12 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
 
     hCmdLine = CreateWindowEx(
         WS_EX_LTRREADING,
-        L"EDIT",
+        CLI_WINDOW_CLASS_NAME,
         NULL,
-        WS_CHILD,
+        WS_CHILD | WS_VISIBLE,
         0,
-        rect.bottom / 2,
-        width,
+        0,//rect.bottom / 2,
+        500,//width,
         100,
         hParent,
         NULL,
@@ -83,7 +91,7 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
     if(hCmdLine == NULL)
         return FALSE;
 
-    SetWindowLong(hCmdLine, GWL_HWNDPARENT, (LONG)hParent);
+ //   SetWindowLong(hCmdLine, GWL_HWNDPARENT, (LONG)hParent);
 
     ShowWindow(hCmdLine, SW_SHOW);
 
