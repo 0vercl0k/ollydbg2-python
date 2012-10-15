@@ -49,6 +49,13 @@ def SetRegisters(r):
         if reg_name in handlers:
             handlers[reg_name](value)
 
+def GetCurrentTEB():
+    """
+    Retrieve the base of the TEB
+    """
+    r = GetCurrentThreadRegisters()
+    return r.base[SEG_FS]
+
 def display_global_registers():
     """
     Display only the global registers
