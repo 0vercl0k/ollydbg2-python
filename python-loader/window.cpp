@@ -1,5 +1,10 @@
 #include "window.hpp"
 #include "plugin.h"
+#include "toolbox.hpp"
+
+#include <windowsx.h>
+#include <commctrl.h>
+#include <python.h>
 
 LRESULT CALLBACK CommandLineWinProc(
   _In_  HWND hwnd,
@@ -13,37 +18,66 @@ LRESULT CALLBACK CommandLineWinProc(
 
     switch (uMsg) 
     { 
-        case WM_CREATE: 
+        case WM_CREATE:
             // Initialize the window.
-            return 0; 
- 
-        case WM_PAINT: 
+            return 0;
+
+        case WM_PAINT:
             // Paint the window's client area.
-
-            // Update the position of the window even if the parent window is resized
-            /*GetWindowRect(GetParent(hwnd), &rect);
-
-            width = (rect.right - rect.left) - 10;
-            Addtolist(0, RED, L"lolilol\n");
-
-            MoveWindow(
-                hwnd,
-                0,
-                rect.bottom,
-                width,
-                100,
-                TRUE
-            );
-            */
-
             ValidateRect(hwnd, 0);
+            break; 
+
+        case WM_DESTROY:
+            // Clean up window-specific data objects.
             return 0; 
 
-        case WM_DESTROY: 
-            // Clean up window-specific data objects. 
-            PostQuitMessage(0);
-            return 0; 
- 
+        case WM_COMMAND:
+        {
+            switch(LOWORD(wParam))
+            {
+                case IDC_MAIN_EDIT:
+                {
+                    switch(HIWORD(wParam))
+                    {
+                        case CBN_SELENDOK:
+                        {
+                            DWORD len = ComboBox_GetTextLength(GetDlgItem(hwnd, IDC_MAIN_EDIT));
+                            if(len == 0)
+                                break;
+
+                            wchar_t *buffer = (wchar_t*) malloc((len + 1) * sizeof(wchar_t));
+                            if(buffer == NULL)
+                                break;
+
+                            SecureZeroMemory(buffer, (len + 1) * sizeof(wchar_t));
+
+                            ComboBox_GetText(
+                                GetDlgItem(hwnd, IDC_MAIN_EDIT),
+                                buffer,
+                                len + 1
+                            );
+
+                            std::string cmd(widechar_to_multibytes(std::wstring(buffer)));
+
+                            PyRun_SimpleString(cmd.c_str());
+
+                            ComboBox_AddString(
+                                GetDlgItem(hwnd, IDC_MAIN_EDIT),
+                                buffer
+                            );
+
+                            free(buffer);
+                            break;
+                        }
+                    }
+
+                    break;
+                }
+            }
+
+            break;
+        }
+
         // 
         // Process other messages. 
         // 
@@ -57,7 +91,7 @@ LRESULT CALLBACK CommandLineWinProc(
 
 BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
 {
-    HWND hCmdLine;
+    HWND hCmdLine, hEdit;
     RECT rect = {0};
     DWORD width = 0;
     WNDCLASS wClass = {0};
@@ -65,7 +99,7 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
     wClass.lpfnWndProc = CommandLineWinProc;
     wClass.hInstance = hInst;
     wClass.lpszClassName = CLI_WINDOW_CLASS_NAME;
-    wClass.hbrBackground = (HBRUSH)16;
+    wClass.hbrBackground = (HBRUSH)(16);
 
     if(RegisterClass(&wClass) == 0)
         return FALSE;
@@ -81,9 +115,9 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
         L"Command Line Window",
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         0,
-        rect.bottom - 25,
+        rect.bottom - 70,
         width,
-        50,
+        60,
         hParent,
         NULL,
         hInst,
@@ -93,7 +127,23 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
     if(hCmdLine == NULL)
         return FALSE;
 
-    ShowWindow(hCmdLine, SW_SHOW);
+    hEdit = CreateWindowEx(
+        WS_EX_OVERLAPPEDWINDOW,
+        WC_COMBOBOX,
+        L"",
+        WS_VISIBLE | WS_CHILD | CBS_SIMPLE | CBS_DISABLENOSCROLL, 
+        0,
+        0,
+        width,
+        100,
+        hCmdLine,
+        (HMENU)IDC_MAIN_EDIT,
+        hInst,
+        NULL
+    );
+
+    if(hEdit == NULL)
+        return FALSE;
 
     return TRUE;
 }

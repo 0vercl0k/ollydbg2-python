@@ -17,7 +17,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 /*
     This routine is required by the OllyDBG plugin engine! 
 */
-extc int __cdecl ODBG2_Pluginquery(int ollydbgversion, ulong *features, wchar_t pluginname[SHORTNAME] ,wchar_t pluginversion[SHORTNAME])
+extc int __cdecl ODBG2_Pluginquery(int ollydbgversion, ulong *features, wchar_t pluginname[SHORTNAME], wchar_t pluginversion[SHORTNAME])
 {
     // Yeah, the plugin interface in the v1/v2 are different
     if(ollydbgversion < 201)
@@ -87,8 +87,6 @@ void spawn_window(void)
 
     if(GetOpenFileName(&ofn) == TRUE)
         execute_python_script(file_path);
-    else
-        Addtolist(0, RED, L"[python-loader] Your path is really *long*, are you trying to crash me ?:)");
 }
 
 int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode)
