@@ -6,6 +6,8 @@
 #include <commctrl.h>
 #include <python.h>
 
+BOOL class_is_already_registered = FALSE;
+
 LRESULT CALLBACK CommandLineWinProc(
   _In_  HWND hwnd,
   _In_  UINT uMsg,
@@ -13,9 +15,6 @@ LRESULT CALLBACK CommandLineWinProc(
   _In_  LPARAM lParam
 )
 {
-    RECT rect = {0};
-    DWORD width = 0;
-
     switch (uMsg) 
     { 
         case WM_CREATE:
@@ -30,6 +29,12 @@ LRESULT CALLBACK CommandLineWinProc(
         case WM_DESTROY:
             // Clean up window-specific data objects.
             return 0; 
+        
+        case WM_CLOSE:
+        {
+            DestroyWindow(hwnd);
+            break;
+        }
 
         case WM_COMMAND:
         {
@@ -57,14 +62,22 @@ LRESULT CALLBACK CommandLineWinProc(
                                 len + 1
                             );
 
+                            Addtolist(0x31337, RED, L"Got %s", buffer);
                             std::string cmd(widechar_to_multibytes(std::wstring(buffer)));
 
                             PyRun_SimpleString(cmd.c_str());
 
-                            ComboBox_AddString(
+                            int idx = ComboBox_FindStringExact(
                                 GetDlgItem(hwnd, IDC_MAIN_EDIT),
+                                0,
                                 buffer
                             );
+
+                            if(idx == CB_ERR)
+                                ComboBox_AddString(
+                                    GetDlgItem(hwnd, IDC_MAIN_EDIT),
+                                    buffer
+                                );
 
                             free(buffer);
                             break;
@@ -101,8 +114,11 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
     wClass.lpszClassName = CLI_WINDOW_CLASS_NAME;
     wClass.hbrBackground = (HBRUSH)(16);
 
-    if(RegisterClass(&wClass) == 0)
+    if(RegisterClass(&wClass) == 0 && class_is_already_registered == FALSE)
         return FALSE;
+
+    if(class_is_already_registered == FALSE)
+        class_is_already_registered = TRUE;
 
     GetWindowRect(hParent, &rect);
 

@@ -9,9 +9,11 @@
 
 #define MENU_LOAD_SCRIPT_IDX 1
 #define MENU_ABOUT_IDX 2
+#define MENU_CMDLINE_IDX 3
 
 #define WINDOW_BUTTON_OK_IDX 0x8801
 #define WINDOW_EDITBOX_IDX 0x8802
+
 
 // Prototypes
 /*
@@ -61,6 +63,11 @@ t_menu g_MainMenu[] =
         L"Load your script", 
         L"Load in OllyDBG your custom python script.",  
         K_E, handle_menu, NULL, MENU_LOAD_SCRIPT_IDX
+    },
+    {
+        L"Open the command-line window", 
+        L"Open the command-line window to run python one-liner.",  
+        K_NONE, handle_menu, NULL, MENU_CMDLINE_IDX
     },
     {
         L"About", 

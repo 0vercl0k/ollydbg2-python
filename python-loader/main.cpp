@@ -42,13 +42,6 @@ extc int __cdecl ODBG2_Pluginquery(int ollydbgversion, ulong *features, wchar_t 
 
     Addtolist(0x31337, RED, L"[python-loader] Plugin fully initialized.");
 
-    BOOL ret = CreateCommandLineWindow(hwollymain, g_hinst);
-    if(ret == FALSE)
-    {
-        Addtolist(0x1337, RED, L"[python-loader] CreateCommandLineWindow failed.");
-        return 0;
-    }
-
     return PLUGIN_VERSION;
 }
 
@@ -111,6 +104,14 @@ int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode)
                     L"About python-loader",
                     MB_OK| MB_ICONINFORMATION
                 );
+
+                break;
+            }
+
+            case MENU_CMDLINE_IDX:
+            {
+                if(CreateCommandLineWindow(hwollymain, g_hinst) == FALSE)
+                    Addtolist(0x31337, RED, L"[python-loader] The command-line window can't be created.");
 
                 break;
             }
