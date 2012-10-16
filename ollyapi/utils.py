@@ -270,7 +270,7 @@ def FindHexInPage(s, address_start = None):
 
     return 0
 
-def call_stack(nb_max_frame = 100):
+def get_call_stack(nb_max_frame = 100):
     """
     Walk on the stack & generate a call stack
     """
@@ -307,3 +307,34 @@ def call_stack(nb_max_frame = 100):
         c = frames_info[i]
         ri = len(frames_info) - i - 1
         print '#%.2d %#.8x : %s (found @%#.8x)' % (ri, c['return-address'], c['symbol'], c['address'])
+
+def get_seh_chain():
+    """
+    Walk on the stack to find the SEH handlers
+    """
+    addr_teb = threads.GetCurrentTEB()
+    seh_addr = memory.ReadDwordMemory(addr_teb)
+    if seh_addr == 0:
+        return None
+
+    seh_entries = []
+
+    # This is the last entry if SEH.Next = -1
+    while seh_addr != 0xffffffff:
+        if memory.IsMemoryExists(seh_addr) == False:
+            break
+
+        seh_next, seh_handler = memory.ReadDwordMemory(seh_addr), memory.ReadDwordMemory(seh_addr + 4)
+
+        seh_entries.append({
+            'handler' : seh_handler,
+            'symbol' : sym.GetSymbolFromAddress(seh_handler),
+            'next' : seh_next
+        })
+
+        seh_addr = seh_next
+
+    i = 0
+    for entry in seh_entries:
+        print '#%.2d - Handler: %s (%#.8x) - Next @ %#.8x' % (i, entry['symbol'], entry['handler'], entry['next'])
+        i += 1

@@ -19,8 +19,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ollyapi import *
-
 def walk_stack(nb_max_frame = 100, nb_args = 4):
     """
     Walk on the stack & generate a call stack

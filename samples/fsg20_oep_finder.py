@@ -18,7 +18,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from ollyapi import *
 
 # XXX: make the page of the PE header rx if you have EMET installed
 # XXX: Invalided flush cache msgbox -- WTF

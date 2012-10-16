@@ -62,7 +62,7 @@ LRESULT CALLBACK CommandLineWinProc(
                                 len + 1
                             );
 
-                            Addtolist(0x31337, RED, L"Got %s", buffer);
+                            // Addtolist(0x31337, RED, L"Got %s", buffer);
                             std::string cmd(widechar_to_multibytes(std::wstring(buffer)));
 
                             PyRun_SimpleString(cmd.c_str());
