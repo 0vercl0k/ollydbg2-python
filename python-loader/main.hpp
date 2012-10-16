@@ -62,7 +62,7 @@ t_menu g_MainMenu[] =
     {
         L"Load your script", 
         L"Load in OllyDBG your custom python script.",  
-        K_E, handle_menu, NULL, MENU_LOAD_SCRIPT_IDX
+        K_NONE, handle_menu, NULL, MENU_LOAD_SCRIPT_IDX
     },
     {
         L"Open the command-line window", 

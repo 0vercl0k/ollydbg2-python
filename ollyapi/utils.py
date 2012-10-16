@@ -21,6 +21,7 @@
 from utils_wrappers import *
 import threads
 import memory
+import sym
 
 def AddUserComment(address, s):
     """
@@ -268,3 +269,41 @@ def FindHexInPage(s, address_start = None):
         return address_start + offset
 
     return 0
+
+def call_stack(nb_max_frame = 100):
+    """
+    Walk on the stack & generate a call stack
+    """
+    frames_info = []
+    args = []
+    ebp = threads.GetEbp()
+
+    for i in range(nb_max_frame):
+        # IsMemoryExists recognizes kernel memory, so we have to manually check it
+        if memory.IsMemoryExists(ebp) == False or ebp >= 0x80000000:
+            break
+
+        # at EBP we have the SEBP
+        sebp = memory.ReadDwordMemory(ebp)
+        # and right after the SEIP
+        seip = memory.ReadDwordMemory(ebp + 4)
+
+        if sebp == 0 or seip == 0 or memory.IsMemoryExists(sebp) == False or memory.IsMemoryExists(seip) == False:
+            break
+
+        symbol = sym.GetSymbolFromAddress(seip)
+        frames_info.append({
+            'return-address' : seip,
+            'address' : sebp + 4,
+            'symbol' : symbol if symbol != None else 'no symbol found',
+        })
+
+        ebp = sebp
+
+    eip = threads.GetEip()
+    print "#%.2d %#.8x : %s" % (len(frames_info), eip, sym.GetSymbolFromAddress(eip))
+    
+    for i in range(len(frames_info)):
+        c = frames_info[i]
+        ri = len(frames_info) - i - 1
+        print '#%.2d %#.8x : %s (found @%#.8x)' % (ri, c['return-address'], c['symbol'], c['address'])

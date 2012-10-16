@@ -1,5 +1,6 @@
 import sys
 from ctypes import *
+from ollyapi import *
 
 kernel32 = windll.kernel32
 buffer_stderr = ''
