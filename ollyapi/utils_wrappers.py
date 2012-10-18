@@ -40,8 +40,8 @@ Findmainmodule = Findmainmodule_TYPE(resolve_api('Findmainmodule'))
 Checkfordebugevent_TYPE = CFUNCTYPE(c_int)
 Checkfordebugevent = Checkfordebugevent_TYPE(resolve_api('Checkfordebugevent'))
 
-# oddata (wchar_t) _arguments[ARGLEN];    // Command line passed to debuggee
-_arguments = resolve_api('_arguments')
+# oddata (wchar_t) arguments[ARGLEN];    // Command line passed to debuggee
+_arguments = resolve_api('arguments')
 
 # stdapi (int) Closeprocess(int confirm);
 Closeprocess_TYPE = CFUNCTYPE(c_int, c_int)
@@ -70,6 +70,9 @@ Getanalysercomment = Getanalysercomment_TYPE(resolve_api('Getanalysercomment'))
 # stdapi (int) Getproccomment(ulong addr,ulong acall,wchar_t *comment,int len,int argonly);
 Getproccomment_TYPE = CFUNCTYPE(c_int, c_ulong, c_ulong, c_wchar_p, c_int, c_int)
 Getproccomment = Getproccomment_TYPE(resolve_api('Getproccomment'))
+
+# oddata (t_run)   run; // Run status of debugged application
+run_ = t_run.from_address(resolve_api('run'))
 
 def InsertNameW(addr, type_, s):
     """
@@ -253,3 +256,7 @@ def GetProcComment(addr, acall = 0, argonly = 0):
     )
 
     return buf.value
+
+def IsDebugeeFinished():
+    """Is the debugee is finished ?"""
+    return run_.status == STAT_FINISHED

@@ -132,7 +132,7 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         0,
         rect.bottom - 70,
-        width,
+        width - 70,
         60,
         hParent,
         NULL,

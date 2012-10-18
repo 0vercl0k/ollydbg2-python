@@ -20,6 +20,7 @@
 #
 from ctypes import *
 from common import *
+from win32_constants import *
 
 # Max length of argument string
 ARGLEN = 1024
@@ -93,7 +94,6 @@ NM_LABEL   = 0x21
 
     STAT_CLOSING
 ) = range(0, 21)
-
 
 class t_exe(Structure):
     """
@@ -513,8 +513,10 @@ class t_operand_u(Union):
     _fields_ = [
         # Value of operand (integer form)
         ('u', c_ulong),
+
         # Value of operand (signed form)
         ('s', c_long),
+
         # Value of operand (general form)
         ('value', c_byte * 16)
     ]
@@ -668,8 +670,10 @@ class t_predict_stack(Structure):
     _fields_ = [
         # Offset of data on stack (signed!)
         ('soffset', c_long),
+
         # State of stack data, set of PST_xxx
         ('sstate', c_ulong),
+
         # Constant related to stack data
         ('sconst', c_ulong)
     ]
@@ -682,8 +686,10 @@ class t_predict_mem(Structure):
     _fields_ = [
         # Address of doubleword variable
         ('maddr', c_ulong),
+
         # State of memory, set of PST_xxx
         ('mstate', c_ulong),
+
         # Constant related to memory data
         ('mconst', c_ulong)
     ]
@@ -704,32 +710,46 @@ class t_predict(Structure):
     _fields_ = [
         # Predicted EIP or NULL if uncertain
         ('addr', c_ulong),
+
         # Must be 1
         ('one', c_ulong),
+
         # Type of prediction, TY_xxx/PR_xxx
         ('type', c_ulong),
+
         # State of register, set of PST_xxx
         ('rstate', c_ulong * NREG),
+
         # Constant related to register
         ('rconst', c_ulong * NREG),
+
         # State of EIP after jump or return
         ('jmpstate', c_ulong),
+
         # Constant related to jump or return
         ('jmpconst', c_ulong),
+
         # Offset of ESP at PUSH EBP
         ('espatpushbp', c_ulong),
+
         # Number of valid stack entries
         ('nstack', c_int),
+
         ('stack', t_predict_stack * NSTACK),
         # Number of valid stkmod addresses
         ('nstkmod', c_int),
+
         # Addresses of stack modifications
         ('stkmod', c_ulong * NSTKMOD),
+
         # Number of valid memory entries
         ('nmem', c_int),
+
         ('mem', t_predict_mem * NMEM),
+
         # State of result of command execution
         ('resstate', c_ulong),
+
         # Constant related to result
         ('resconst', c_ulong)
     ]
@@ -745,10 +765,13 @@ class t_modop(Structure):
     _fields_ = [
         # Operand features, set of AMP_xxx
         ('features', c_byte),
+
         # (Pseudo)register operand
         ('reg', c_byte),
+
         # Scales of (pseudo)registers in address
         ('scale', c_byte * NPSEUDO),
+
         # Constant or const part of address
         ('opconst', c_ulong)
     ]
@@ -769,20 +792,91 @@ class t_asmmod(Structure):
     _fields_ = [
         # Binary code
         ('code', c_byte * MAXCMDSIZE),
+
         # Mask for binary code (0: bit ignored)
         ('mask', c_byte * MAXCMDSIZE),
+
         # List of prefixes, set of PF_xxx
         ('prefixes', c_ulong),
+
         # Length of code w/o prefixes, bytes
         ('ncode', c_byte),
+
         # Code features, set of AMF_xxx
         ('features', c_byte),
+
         # Postbyte (if AMF_POSTBYTE set)
         ('postbyte', c_byte),
+
         # Number of operands (no pseudooperands)
         ('nop', c_byte),
+
         # Description of operands
         ('op', t_modop * NOPERAND)
     ]
 
 t_asmmod_p = POINTER(t_asmmod)
+
+class t_run(Structure):
+    """
+    Run status of debugged application
+    Size: 164bytes
+    """
+    _pack_ = 1
+    _fields_ = [
+        # Operation mode, one of STAT_xxx
+        ('status', c_int),
+
+        # ID of single running thread, 0 if all
+        ('threadid', c_ulong),
+
+        # Tick count when pausing was requested
+        ('tpausing', c_ulong),
+
+        # 0: wait, 1: waked, 2: warned
+        ('wakestep', c_int),
+
+        # EIP at last debugging event
+        ('eip', c_ulong),
+
+        # ECX at last debugging event
+        ('ecx', c_ulong),
+
+        # Address of temporarily removed INT3
+        ('restoreint3addr', c_ulong),
+
+        # Destination of STAT_STEPOVER
+        ('stepoverdest', c_ulong),
+
+        # Update temporarily removed bppage's
+        ('updatebppage', c_int),
+
+        # Information from WaitForDebugEvent()
+        ('de', DEBUG_EVENT),
+
+        # Paused on event, threads suspended
+        ('indebugevent', c_int),
+
+        # Event is from .NET debugger
+        ('netevent', c_int),
+
+        # Exception in application, AE_xxx
+        ('isappexception', c_int),
+
+        # Last exception in application or 0
+        ('lastexception', c_ulong),
+
+        # Suspension counter
+        ('suspended', c_int),
+
+        # Whether first suspension on pause
+        ('suspendonpause', c_int),
+
+        # 1: set, -1: reset HW breakpoints
+        ('updatedebugreg', c_int),
+
+        # Debug regs modified by application
+        ('dregmodified', c_int)
+    ]
+
+t_run_p = POINTER(t_run)

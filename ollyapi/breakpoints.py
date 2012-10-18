@@ -35,6 +35,10 @@ class Breakpoint(object):
         self.is_conditional_bp = condition != None
         self.condition = '' if condition == None else condition
 
+    def get_address(self):
+        """Get the address of the breakpoint"""
+        return self.address
+
     def get_state(self):
         """
         Get the state of your breakpoint
