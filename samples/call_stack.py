@@ -19,39 +19,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-def walk_stack(nb_max_frame = 100, nb_args = 4):
-    """
-    Walk on the stack & generate a call stack
-    """
-    frames_info = []
-    args = []
-    ebp = GetEbp()
-
-    for i in range(nb_max_frame):
-        # at EBP we have the SEBP
-        sebp = ReadDwordMemory(ebp)
-        # and right after the SEIP
-        seip = ReadDwordMemory(ebp + 4)
-
-        if sebp == 0 or seip == 0:
-            break
-
-        # if we have a stack-frame big enough to dump nb_arg
-        if (sebp - (ebp + 8)) >= nb_args*4:
-            args = [ReadDwordMemory(i) for i in range(ebp + 8, ebp + 8 + 4*nb_args, 4)]
-
-        symbol = GetSymbolFromAddress(seip)
-        frames_info.append({
-            'return-address' : seip,
-            'address' : sebp + 4,
-            'symbol' : symbol if symbol != None else 'no symbol found',
-            'args' : args
-        })
-
-        ebp = sebp
-
-    return frames_info
-
 def main():
     # We need to add some symbol to our sample:
     AddUserLabel(0x00401090, 'main')
@@ -71,13 +38,7 @@ def main():
     b.remove()
 
     # OK now the call stack should be interesting!1!&
-    call_stack = walk_stack()
-    print "#%.2d %#.8x : %s" % (len(call_stack), GetEip(), GetSymbolFromAddress(GetEip()))
-    for i in range(len(call_stack)):
-        c = call_stack[i]
-        ri = len(call_stack) - i - 1
-        print '#%.2d %#.8x : %s (found @%#.8x)' % (ri, c['return-address'], c['symbol'], c['address'])
-
+    display_call_stack()
     return 1
 
 if __name__ == '__main__':

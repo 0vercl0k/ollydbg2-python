@@ -270,7 +270,7 @@ def FindHexInPage(s, address_start = None):
 
     return 0
 
-def get_call_stack(nb_max_frame = 100):
+def display_call_stack(nb_max_frame = 100):
     """
     Walk on the stack & generate a call stack
     """
@@ -308,7 +308,7 @@ def get_call_stack(nb_max_frame = 100):
         ri = len(frames_info) - i - 1
         print '#%.2d %#.8x : %s (found @%#.8x)' % (ri, c['return-address'], c['symbol'], c['address'])
 
-def get_seh_chain():
+def display_seh_chain():
     """
     Walk on the stack to find the SEH handlers
     """

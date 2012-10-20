@@ -34,15 +34,6 @@ Threadregisters = Threadregisters_TYPE(resolve_api('Threadregisters'))
 Getcputhreadid_TYPE = CFUNCTYPE(c_ulong)
 Getcputhreadid = Getcputhreadid_TYPE(resolve_api('Getcputhreadid'))
 
-# oddata (ulong)   processid;            // Process ID of Debuggee or 0
-processid = c_ulong.from_address(resolve_api('processid')).value
-
-# oddata (HANDLE)  process;              // Handle of Debuggee or NULL
-# XXX: ctypes.wintypes doesn't exist in python 2.6
-# In [12]: wintypes.HANDLE
-# Out[12]: ctypes.c_void_p
-processhandle = c_void_p.from_address(resolve_api('process')).value
-
 def ResumeAllThreads():
     Resumeallthreads()
 
@@ -66,7 +57,6 @@ def SetEip(eip = 0):
     p_reg = Threadregisters(c_ulong(GetCpuThreadId()))
     p_reg[0].ip = eip
 
-
 def GetEip():
     """
     Get the EIP register
@@ -78,13 +68,18 @@ def GetProcessId():
     """
     Get the PID of the debuggee
     """
-    return processid
+    # oddata (ulong)   processid;            // Process ID of Debuggee or 0
+    return c_ulong.from_address(resolve_api('processid')).value
 
 def GetProcessHandle():
     """
     Get the handle on the debuggee (obtained via OpenProcess)
     """
-    return processhandle
+    # oddata (HANDLE)  process;              // Handle of Debuggee or NULL
+    # XXX: ctypes.wintypes doesn't exist in python 2.6
+    # In [12]: wintypes.HANDLE
+    # Out[12]: ctypes.c_void_p
+    return c_void_p.from_address(resolve_api('process')).value
 
 # metaprogramming magixx
 
