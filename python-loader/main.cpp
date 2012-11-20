@@ -33,14 +33,14 @@ extc int __cdecl ODBG2_Pluginquery(int ollydbgversion, ulong *features, wchar_t 
     std::wstring pathW(ollydir);
     pathW += L"\\hook.py";
 
-    Addtolist(0x31337, WHITE, L"[python-loader] Preparing to hook stdout/stderr of the python environment (%s)..", pathW.c_str());
+    Addtolist(0x31337, WHITE, NAME_PLUGIN L" Preparing to hook stdout/stderr of the python environment (%s)..", pathW.c_str());
 
     std::string pathA(widechar_to_multibytes(pathW));
 
     PyObject* PyFileObject = PyFile_FromString((char*)pathA.c_str(), "r");
     PyRun_SimpleFile(PyFile_AsFile(PyFileObject), pathA.c_str());
 
-    Addtolist(0x31337, RED, L"[python-loader] Plugin fully initialized.");
+    Addtolist(0x31337, RED, NAME_PLUGIN L" Plugin fully initialized.");
 
     return PLUGIN_VERSION;
 }
@@ -111,7 +111,7 @@ int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode)
             case MENU_CMDLINE_IDX:
             {
                 if(CreateCommandLineWindow(hwollymain, g_hinst) == FALSE)
-                    Addtolist(0x31337, RED, L"[python-loader] The command-line window can't be created.");
+                    Addtolist(0x31337, RED, NAME_PLUGIN L" The command-line window can't be created.");
 
                 break;
             }
@@ -128,7 +128,7 @@ int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode)
 
 void execute_python_script(wchar_t *path)
 {
-    Addtolist(0, WHITE, L"[python-loader] Trying to execute the script located here: '%s'..", path);
+    Addtolist(0, WHITE, NAME_PLUGIN L" Trying to execute the script located here: '%s'..", path);
 
     std::wstring pathW(path);
     std::string pathA(widechar_to_multibytes(pathW));
@@ -136,11 +136,11 @@ void execute_python_script(wchar_t *path)
     PyObject* PyFileObject = PyFile_FromString((char*)pathA.c_str(), "r");
     if(PyFileObject == NULL)
     {
-        Addtolist(0, RED, L"[python-loader] Your file doesn't exist.");
+        Addtolist(0, RED, NAME_PLUGIN L" Your file doesn't exist.");
         return;
     }
 
     PyRun_SimpleFile(PyFile_AsFile(PyFileObject), (char*)pathA.c_str());
 
-    Addtolist(0, WHITE, L"[python-loader] Execution is done!");
+    Addtolist(0, WHITE, NAME_PLUGIN L" Execution is done!");
 }

@@ -62,7 +62,6 @@ LRESULT CALLBACK CommandLineWinProc(
                                 len + 1
                             );
 
-                            // Addtolist(0x31337, RED, L"Got %s", buffer);
                             std::string cmd(widechar_to_multibytes(std::wstring(buffer)));
 
                             PyRun_SimpleString(cmd.c_str());
@@ -106,7 +105,6 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
 {
     HWND hCmdLine, hEdit;
     RECT rect = {0};
-    DWORD width = 0;
     WNDCLASS wClass = {0};
 
     wClass.lpfnWndProc = CommandLineWinProc;
@@ -122,9 +120,6 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
 
     GetWindowRect(hParent, &rect);
 
-    // We want an editbox as large the window is, minus the scrollbar
-    width = (rect.right - rect.left) - 10;
-
     hCmdLine = CreateWindowEx(
         WS_EX_LTRREADING,
         CLI_WINDOW_CLASS_NAME,
@@ -132,7 +127,7 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         0,
         rect.bottom - 70,
-        width - 70,
+        530,
         60,
         hParent,
         NULL,
@@ -150,7 +145,7 @@ BOOL CreateCommandLineWindow(HWND hParent, HINSTANCE hInst)
         WS_VISIBLE | WS_CHILD | CBS_SIMPLE | CBS_DISABLENOSCROLL, 
         0,
         0,
-        width,
+        530,
         100,
         hCmdLine,
         (HMENU)IDC_MAIN_EDIT,

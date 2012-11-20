@@ -6,6 +6,7 @@
 
 // Constants
 #define CLASS_NAME L"script_loading window"
+#define NAME_PLUGIN L"[python-loader]"
 
 #define MENU_LOAD_SCRIPT_IDX 1
 #define MENU_ABOUT_IDX 2
