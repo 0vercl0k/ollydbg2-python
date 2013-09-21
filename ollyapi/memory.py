@@ -18,13 +18,91 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from memory_wrappers import *
+from python_bindings_swig import *
 import threads
-import common
 import utils
 
 from struct import unpack as u
 from binascii import unhexlify
+
+# Wrappers
+
+def FlushMemoryCache():
+    """
+    Flush the intern memory cache of OllyDBG2
+    """
+    Flushmemorycache()
+
+def WriteMemory(buff, addr = None, mode = 0):
+    """
+    Write directly in the memory of the process
+    """
+
+    # XXX: check if memory exists
+    if addr == None:
+        addr = threads.GetEip()
+        
+    n = Writememory(
+        buff,
+        addr,
+        len(buff),
+        mode
+    )
+
+    # flush the cache after writing ; not sure it's good/required to do that though.
+    FlushMemoryCache()
+
+    return n
+
+def ReadMemory(size, addr = None, mode = 0):
+    """
+    Read the memory of the process at a specific address
+    """
+    # XXX: test if the address exists
+    if addr == None:
+        addr = threads.GetEip()
+
+    b = bytearray(size)
+    n = Readmemory(
+        b,
+        addr,
+        size,
+        mode
+    )
+
+    # XXX: Hmm, don't care about n right ?
+    return str(b)
+
+def Expression_(result, expression, data, base, size, threadid, a, b, mode):
+    """
+    Let OllyDbg evaluate an expression for you:
+        * get an exported function address easily thanks to the notation module.function_name
+    """
+    r = Expression(
+        result,
+        expression,
+        data,
+        base,
+        size,
+        threadid,
+        a,
+        b,
+        mode
+    )
+
+    if result.value == 'Unrecognized identifier':
+        return None
+
+    return r
+
+def FindMemory(addr):
+    """
+    Find a structure t_memory describing the memory addr points to
+    """
+    return Findmemory(addr)
+
+
+# Abstraction
 
 def ResolveApiAddress(module, function):
     """
@@ -34,10 +112,10 @@ def ResolveApiAddress(module, function):
         - you can use '<ModuleEntryPoint>' as a function name to resolve the entry point of a specific module
     """
     r = t_result()
-    ret = Expression(
+    ret = Expression_(
         r,
         '%s.%s' % (module, function),
-        0,
+        '',
         0,
         0,
         threads.GetCpuThreadId(),
@@ -65,7 +143,7 @@ def IsMemoryExists(address):
     """
     Is the memory page exists in the process ?
     """
-    return common.IsNullPointer(FindMemory(address)) == False
+    return FindMemory(address) != None
 
 def PatchCodeWithHex(s, address = None):
     """
@@ -95,7 +173,7 @@ def PatchCode(s, address = None):
 
     bin = ''
     try:
-        bin, s = utils.Assemble(s)
+        bin, s = utils.Assemble__(s)
     except Exception, e:
         raise(e)
 

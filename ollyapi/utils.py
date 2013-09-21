@@ -18,10 +18,197 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from utils_wrappers import *
+from python_bindings_swig import *
 import threads
 import memory
 import sym
+
+# Wrappers
+
+def InsertNameW(addr, type_, s):
+    """
+    That function is used to add label and comment directly on the disassembly
+    (like with the shortcut ':' or ';')
+    """
+    return InsertnameW(
+        addr,
+        type_,
+        s
+    )
+
+def CheckForDebugEvent():
+    """
+    Hum, this method seems to be very important, one of its purpose
+    is to updated the thread registers retrieved thanks to Threadregisters()
+    """
+    return Checkfordebugevent()
+
+def CloseProcess(confirm = 0):
+    """
+    Close the process being debugged
+    """
+    return Closeprocess(confirm)
+
+def SetArguments(s):
+    """
+    Set the cmdline passed to the debuggee, exactly the same when you do "File > Set new arguments"
+    """
+    assert(len(s) * 2 < ARGLEN)
+    cvar.arguments = unicode(s)
+    
+def Disasm_(c, address = 0):
+    """
+    Disassemble some x86 code (only one instruction though) thanks to the OllyDbg2 engine
+    """
+    buff = bytearray(c)
+    di = t_disasm()
+    size_instr = Disasm(
+        buff,
+        len(buff),
+        address,
+        None,
+        di,
+        DA_TEXT | DA_OPCOMM | DA_DUMP | DA_MEMORY,
+        t_reg(),
+        t_predict()
+    )
+
+    return size_instr, str(di.result)
+
+def Assemble_(s, address = 0):
+    """
+    Assemble some x86 stuff
+    """
+
+    # the longuest x86 instruction is 15 bytes long
+    code = bytearray(15)
+
+    # XXX: it should be enough (?)
+    error_msg = bytearray(256)
+
+    sizeof_assembled = Assemble(
+        s,
+        address,
+        code,
+        len(code),
+        1,
+        error_msg
+    )
+
+    # you submit invalid x86 assembly
+    # XXX: doesn't it exist a proper way to do that ??
+    if error_msg.startswith('U\x00n\x00k\x00n\x00o\x00w\x00n'):
+        return (0, 0, str(error_msg.replace('\x00', '')))
+
+    return str(code[:sizeof_assembled]), sizeof_assembled
+
+def AssembleAllForms(s, ip = 0):
+    """
+    Actually, I only use this function to obtain a t_asmod structure, to pass it
+    at CompareCommand()
+    """
+    maxmodel = 0x80
+    asmod = t_asmmodArray(maxmodel)
+
+    # XXX: it should be enough (?)
+    error_msg = bytearray(256)
+
+    r = Assembleallforms(
+        s,
+        ip,
+        asmod.cast(),
+        maxmodel,
+        7,
+        error_msg
+    )
+
+    if r == 0:
+        raise Exception('Cannot assembled your instruction: %s' % str(error_msg.replace('\x00', '')))
+
+    return asmod, r
+
+def CompareCommand(cmd, cmdsize, cmdip, model, nmodel):
+    """
+    Compare command, used to search instruction accross the memory
+    """
+    a, b = 0, 0
+
+    return Comparecommand(
+        cmd,
+        cmdsize,
+        cmdip,
+        model.cast(),
+        nmodel,
+        a,
+        b,
+        t_disasm()
+    )
+
+def GetAnalyserComment(addr):
+    """
+    Get an analyser comment with an address
+
+    Example of comment you can retrieved:
+
+    """
+    buf = bytearray(256)
+    r = Getanalysercomment(
+        None,
+        addr,
+        buf,
+        256
+    )
+
+    return str(buf.replace('\x00', ''))
+
+def GetProcComment(addr, acall = 0, argonly = 0):
+    """
+    Get comment generated for a specific Procedure
+
+    Example of comment:
+        004017A0  /$  55            PUSH EBP                                 ; breakpoints.004017A0(guessed void)
+    """
+    buf = bytearray(256)
+    r = Getproccomment(
+        addr,
+        acall,
+        buf,
+        256,
+        argonly
+    )
+
+    return str(buf.replace('\x00', ''))
+
+def IsDebuggeeFinished():
+    """Is the debugee is finished ?"""
+    return cvar.run.status == STAT_FINISHED
+
+
+# Abstraction
+
+def Run__(status = STAT_RUNNING, pass_exception = 0):
+    """
+    Run the process, step-in, step-over, whatever
+    """
+    Run(status, pass_exception)
+
+    # required in order to update the state of the thread registers (retrieved with Threadregisters for example)
+    # BTW, not sure it's supposed to be done this way though, I've found that in an OllyDBG2 reverse-engineering session.
+    while CheckForDebugEvent() == 1:
+        memory.FlushMemoryCache()
+
+def FindMainModule():
+    """
+    Get a cool structure filled with juicy information concerning
+    the process being debugged ; you can find its ImageBase, real ImageBase, etc.
+    Check t_module structure definition
+    """
+    r = Findmainmodule()
+
+    if r is None:
+        raise Exception("You haven't loaded any executable file")
+
+    return r
 
 def AddUserComment(address, s):
     """
@@ -49,11 +236,10 @@ def GetPESections():
     Each entry is a t_secthdr
     """
     mod = FindMainModule()
-    n = mod.nsect
+    sects = t_secthdrArray.frompointer(mod.sect)
     sections = []
-    for i in range(n):
-        section = mod.sect[i]
-        sections.append(section)
+    for i in range(mod.nsect):
+        sections.append(sects[i])
     return sections
 
 def GetEntryPoint():
@@ -67,19 +253,19 @@ def StepInto():
     """
     Step-into, exactly the same when you hit F7
     """
-    Run(STAT_STEPIN)
+    Run__(STAT_STEPIN)
 
 def StepOver():
     """
     Step-over, exactly the same when you hit F8
     """
-    Run(STAT_STEPOVER)
+    Run__(STAT_STEPOVER)
 
 def ExecuteUntilRet():
     """
     Execute until RET instruction, exactly the same when you hit ctrl+F9
     """
-    Run(STAT_TILLRET)
+    Run__(STAT_TILLRET)
 
 def Disass(c, address = 0):
     """
@@ -111,7 +297,7 @@ def Disass(c, address = 0):
 
     return complete_disass
 
-def Assemble(s, address = 0):
+def Assemble__(s, address = 0):
     """
     A high level version of the assemble version ; you can assemble several instructions
     each instruction must be separated by a ';'
@@ -123,16 +309,16 @@ def Assemble(s, address = 0):
     code = ''
 
     for instr in instrs:
-        assem, size, err = Assemble_(instr, address + len(code))
+        assem, size = Assemble_(instr, address + len(code))
 
         # your instruction doesn't seem possible to assemble
         if size == 0:
-            raise Exception("OllyDBG doesn't know how to assemble this instruction: %s (error msg: %s)" % (instr, err))
+            raise Exception("OllyDBG doesn't know how to assemble this instruction: %s" % s)
 
         total_size += size
         code += assem
 
-    return (code, size)
+    return (code, total_size)
 
 def FindInstr(instr, address_start = None):
     """
@@ -153,7 +339,7 @@ def FindInstr(instr, address_start = None):
         raise(e)
 
     # get information about the memory block
-    mem_info = memory.FindMemory(address_start).contents
+    mem_info = memory.FindMemory(address_start)
 
     # now we can call comparecommand
     size_to_dump = mem_info.size - (address_start - mem_info.base)
@@ -252,7 +438,7 @@ def FindHexInPage(s, address_start = None):
         return 0
 
     # get information about the memory block
-    mem_info = memory.FindMemory(address_start).contents
+    mem_info = memory.FindMemory(address_start)
     
     size_mem_block = mem_info.size - (address_start - mem_info.base)
     offset, found = 0, False

@@ -18,10 +18,84 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from breakpoints_wrappers import *
-from breakpoints_constants import *
-import utils
-import threads
+from python_bindings_swig import *
+
+def SetInt3Breakpoint(address, type_bp = 0, fnindex = 0, limit = 0, count = 0, actions = 0, condition = '', expression = '', exprtype = ''):
+    """
+    Python wrapper for the Setint3breakpoint function
+    """
+    return Setint3breakpoint(
+        address,
+        type_bp,
+        fnindex,
+        limit,
+        count,
+        actions,
+        condition,
+        expression,
+        exprtype
+    )
+
+def SetHardBreakpoint(address, index = 0, size = 0, type_ = 0, fnindex = 0, limit = 0, count = 0, actions = 0, condition = '', expression = '', exprtype = ''):
+    """
+    Set a hardware breakpoint
+    """
+    return Sethardbreakpoint(
+        index,
+        size,
+        type_,
+        fnindex,
+        address,
+        limit,
+        count,
+        actions,
+        condition,
+        expression,
+        exprtype
+    )
+
+def RemoveInt3Breakpoint(address, type_bp):
+    """
+    Remove software breakpoint
+    """
+    return Removeint3breakpoint(
+        address,
+        type_bp
+    )
+
+def RemoveHardbreapoint(slot):
+    """
+    Remove hardware breakpoint
+    """
+    return Removehardbreakpoint(slot)
+
+def FindFreeHardbreakSlot(type_):
+    """
+    Find a free slot to put your hardware breakpoint
+    """
+    return Findfreehardbreakslot(type_)
+
+def SetMemoryBreakpoint(address, size = 1, type_ = 0, limit = 0, count = 0, condition = '', expression = '', exprtype = ''):
+    """
+    Set a memory breakpoint
+    """
+    return Setmembreakpoint(
+        address,
+        size,
+        type_,
+        limit,
+        count,
+        condition,
+        expression,
+        exprtype
+    )
+
+def RemoveMemoryBreakpoint(addr):
+    """
+    Remove a memory breakpoint
+    """
+    return Removemembreakpoint(addr)
+
 
 # WE NEED ABSTRACTION MAN
 

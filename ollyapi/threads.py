@@ -18,7 +18,118 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from threads_wrappers import *
+from python_bindings_swig import *
+
+# Wrappers
+
+def ResumeAllThreads():
+    Resumeallthreads()
+
+def ThreadRegisters(threadid):
+    """
+    Get the registers (SEE/FPU/General registers/etc) for the current thread debugged
+    """
+    return Threadregisters(threadid)
+
+def GetCpuThreadId():
+    """
+    Get the TID of the current thread
+    """
+    return Getcputhreadid()
+
+# The metaprogramming trick doesn't work because the ip field isn't in the t_reg.r array :(
+def SetEip(eip = 0):
+    """
+    Modify the EIP register
+    """
+    p_reg = Threadregisters(GetCpuThreadId())
+    p_reg.ip = eip
+
+def GetEip():
+    """
+    Get the EIP register
+    """
+    p_reg = Threadregisters(GetCpuThreadId())
+    return p_reg.ip
+
+def GetProcessId():
+    """
+    Get the PID of the debuggee
+    """
+    # oddata (ulong)   processid;            // Process ID of Debuggee or 0
+    return cvar.processid
+
+def GetProcessHandle():
+    """
+    Get the handle on the debuggee (obtained via OpenProcess)
+    """
+    # oddata (HANDLE)  process;              // Handle of Debuggee or NULL
+    return cvar.process
+
+# metaprogramming magixx
+
+def CreateRegisterSetter(reg_id, reg_name):
+    """
+    Create dynamically a setter function for an x86 register contained in t_reg.r
+    """
+    def template_func(reg_value):
+        r = Threadregisters(GetCpuThreadId())
+        regs = ulongArray.frompointer(r.r)
+        regs[reg_id] = reg_value
+
+    f = template_func
+    # adjust correctly the name of the futur function
+    f.__name__ = 'Set%s' % reg_name.capitalize()
+    f.__doc__  = 'Set the %s register' % reg_name.upper()
+
+    return (f.__name__, f)
+
+def CreateRegisterGetter(reg_id, reg_name):
+    """
+    Create dynamically a getter function for an x86 register contained in t_reg.r
+    """
+    def template_func():
+        r = Threadregisters(GetCpuThreadId())
+        regs = ulongArray.frompointer(r.r)
+        return regs[reg_id]
+
+    f = template_func
+    # adjust correctly the name of the futur function
+    f.__name__ = 'Get%s' % reg_name.capitalize()
+    f.__doc__  = 'Get the %s register' % reg_name.upper()
+
+    return (f.__name__, f)
+
+def BuildSettersGetters():
+    """
+    Create dynamically all the getters/setters function used to retrieve/set register value in
+    t_reg.r
+    """
+    list_reg = [
+        ('eax', REG_EAX),
+        ('ecx', REG_ECX),
+        ('edx', REG_EDX),
+        ('ebx', REG_EBX),
+        ('esp', REG_ESP),
+        ('ebp', REG_EBP),
+        ('esi', REG_ESI),
+        ('edi', REG_EDI)
+    ]
+
+    for reg_name, reg_id in list_reg:
+        # Build the setter
+        n, f = CreateRegisterSetter(reg_id, reg_name)
+        globals()[n] = f
+
+        # Build the getter
+        n, f = CreateRegisterGetter(reg_id, reg_name)
+        globals()[n] = f
+
+# it's a bit magic, instanciation of the functions!
+BuildSettersGetters()
+
+
+# Abstraction
 
 def GetCurrentThreadRegisters():
     """
@@ -54,18 +165,19 @@ def GetCurrentTEB():
     Retrieve the base of the TEB
     """
     r = GetCurrentThreadRegisters()
-    return r.base[SEG_FS]
+    base = ulongArray.frompointer(r.base)
+    return base[SEG_FS]
 
 def display_global_registers():
     """
     Display only the global registers
     """
     r = GetCurrentThreadRegisters()
-
-    print 'EAX: %#.8x, ECX: %#.8x' % (r.r[REG_EAX], r.r[REG_ECX])
-    print 'EDX: %#.8x, EBX: %#.8x' % (r.r[REG_EDX], r.r[REG_EBX])
-    print 'ESP: %#.8x, EBP: %#.8x' % (r.r[REG_ESP], r.r[REG_EBP])
-    print 'ESI: %#.8x, EDI: %#.8x' % (r.r[REG_ESI], r.r[REG_EDI])
+    p_reg = ulongArray.frompointer(r.r)
+    print 'EAX: %#.8x, ECX: %#.8x' % (p_reg[REG_EAX], p_reg[REG_ECX])
+    print 'EDX: %#.8x, EBX: %#.8x' % (p_reg[REG_EDX], p_reg[REG_EBX])
+    print 'ESP: %#.8x, EBP: %#.8x' % (p_reg[REG_ESP], p_reg[REG_EBP])
+    print 'ESI: %#.8x, EDI: %#.8x' % (p_reg[REG_ESI], p_reg[REG_EDI])
     print 'EIP: %#.8x' % r.ip
 
 def display_segment_selectors():
@@ -73,10 +185,12 @@ def display_segment_selectors():
     Display the segment selectors with their bases/limits
     """
     r = GetCurrentThreadRegisters()
-
-    print 'ES: %#.2x (%#.8x - %#.8x), CS: %#.2x (%#.8x - %#.8x)' % (r.s[SEG_ES], r.base[SEG_ES], (r.base[SEG_ES] + r.limit[SEG_ES]), r.s[SEG_CS], r.base[SEG_CS], (r.base[SEG_CS] + r.limit[SEG_CS]))
-    print 'SS: %#.2x (%#.8x - %#.8x), DS: %#.2x (%#.8x - %#.8x)' % (r.s[SEG_SS], r.base[SEG_SS], (r.base[SEG_SS] + r.limit[SEG_SS]), r.s[SEG_DS], r.base[SEG_DS], (r.base[SEG_DS] + r.limit[SEG_DS]))
-    print 'FS: %#.2x (%#.8x - %#.8x), GS: %#.2x (%#.8x - %#.8x)' % (r.s[SEG_FS], r.base[SEG_FS], (r.base[SEG_FS] + r.limit[SEG_FS]), r.s[SEG_GS], r.base[SEG_GS], (r.base[SEG_GS] + r.limit[SEG_GS]))
+    s = ulongArray.frompointer(r.s)
+    base = ulongArray.frompointer(r.base)
+    limit = ulongArray.frompointer(r.limit)
+    print 'ES: %#.2x (%#.8x - %#.8x), CS: %#.2x (%#.8x - %#.8x)' % (s[SEG_ES], base[SEG_ES], (base[SEG_ES] + limit[SEG_ES]), s[SEG_CS], base[SEG_CS], (base[SEG_CS] + limit[SEG_CS]))
+    print 'SS: %#.2x (%#.8x - %#.8x), DS: %#.2x (%#.8x - %#.8x)' % (s[SEG_SS], base[SEG_SS], (base[SEG_SS] + limit[SEG_SS]), s[SEG_DS], base[SEG_DS], (base[SEG_DS] + limit[SEG_DS]))
+    print 'FS: %#.2x (%#.8x - %#.8x), GS: %#.2x (%#.8x - %#.8x)' % (s[SEG_FS], base[SEG_FS], (base[SEG_FS] + limit[SEG_FS]), s[SEG_GS], base[SEG_GS], (base[SEG_GS] + limit[SEG_GS]))
 
 def display_eflags():
     """
