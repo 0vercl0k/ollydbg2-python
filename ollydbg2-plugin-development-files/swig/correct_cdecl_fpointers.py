@@ -38,7 +38,7 @@ def main(argc, argv):
     r = r.replace('arg1 = (char *) buf;', 'arg1 = (char*) buf1;')
     r = r.replace('arg3 = (uchar *) buf;', 'arg3 = (uchar *) buf3;')
     open(path, 'w').write(r)
-    return 1
+    return 0
 
 if __name__ == '__main__':
     sys.exit(main(len(sys.argv), sys.argv))

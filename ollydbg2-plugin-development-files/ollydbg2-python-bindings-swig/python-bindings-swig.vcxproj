@@ -79,6 +79,13 @@
       <AdditionalDependencies>ollydbg.lib;python27.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>..\..\ollyapi\_python_bindings_swig.pyd</OutputFile>
     </Link>
+    <PreBuildEvent>
+      <Command>cd ..\swig\
+generate_python_module.bat</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Launching the python bindings generation with SWIG..</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ollydbg2-swig_wrap.c" />
