@@ -1,10 +1,11 @@
 Contents
 ===============
-+ [OllyDbg2-Python]
-+ [Installation]
-+ [Known Issues]
-+ [Contributing]
++ [OllyDbg2-Python](#OllyDbg2Python)
++ [Installation](#Installation)
++ [Known Issues](#KnownIssues)
++ [Contributing](#Contributing)
 
+<a name="OllyDbg2Python"/>
 OllyDbg2-Python
 ===============
 
@@ -15,6 +16,7 @@ Nowadays in the reverse-engineering world, almost everything is scriptable using
 Under the hoods
 ------------
 To be able to export OllyDbg2's API to Python (currently Py275), we need two important things:
+
 1. python-loader: this is an OllyDbg2 plugin that imports the Python engine ; with that plugin you can launch some Python into your debugger
 2. python-bindings-swig: this project builds the connectors you need to poke OllyDbg2's API with Python
 
@@ -51,27 +53,29 @@ To build the API bindings you will need [SWIG](http://www.swig.org/) and Python 
 1. Fetch the last [Ollydbg2's development files](http://www.ollydbg.de/version2.html). Move the `plugin.h` in the `ollydbg2-plugin-development-files/inc/` directory, and the `ollydbg.lib` in `ollydbg2-plugin-development-files/lib/`.
 2. Then copy the `plugin.h` to `plugin-swig.h`. Here are the things you have to change in the `plugin-swig.h` file:
 
-* Some API are declared in the `plugin.h` file, but in fact they aren't in Ollydbg2's export address table ; so comment them. Here is the list: `SetcaseA`, `SetcaseW`, `StrcopycaseA`, `StrcopycaseW`, `StrnstrA`, `StrnstrW`, `StrcmpW`, `Div64by32`, `CRCcalc`, `Getcpuidfeatures`, `Maskfpu`, `Clearfpu`.
-* Remove the `__cdecl` from the `stdapi`, `varapi`, `oddata`, `pentry`. There is also another one in `EMUFUNC`'s typedef.
-* Remove the `const` from the `oddata` declaration (like that you will be able to interact with internal variables) both in `plugin.h` & `plugin-swig.h`.
-* Remove the `_import` keyword from `oddata`'s definition.
-* Rename the `Readmemory`'s first argument into `char *buff`, add before `%pybuffer_mutable_string(char *buf)`, add after `%typemap(in) char *buf;`. Do the same thing with the following API:
- * `Disasm` and its first argument
- * `Assembleallforms` and its last argument
- * `Getanalysercomment` and its third argument
- * `Getproccomment` and its third argument
- * `Decodeaddress` and its fourth argument
- * `Decoderelativeoffset` and its third argument
-* Anonymous nested structures aren't supported, so you have to give a name to the unions in the following structure: `t_result`.
+ * Some API are declared in the `plugin.h` file, but in fact they aren't in Ollydbg2's export address table ; so comment them. Here is the list: `SetcaseA`, `SetcaseW`, `StrcopycaseA`, `StrcopycaseW`, `Strnst`, `StrnstrW`, `StrcmpW`, `Div64by32`, `CRCcalc`, `Getcpuidfeatures`, `Maskfpu`, `Clearfpu`.
+ * Remove the `__cdecl` from the `stdapi`, `varapi`, `oddata`, `pentry`. There is also another one in `EMUFUNC`'s typedef.
+ * Remove the `const` from the `oddata` declaration (like that you will be able to interact with internal variables) both in `plugin.h` & `plugin-swig.h`.
+ * Remove the `_import` keyword from `oddata`'s definition.
+ * Rename the `Readmemory`'s first argument into `char *buff`, add before `%pybuffer_mutable_string(char *buf)`, add after `%typemap(in) char *buf;`. Do the same thing with the following API:
+  * `Disasm` and its first argument
+  * `Assembleallforms` and its last argument
+  * `Getanalysercomment` and its third argument
+  * `Getproccomment` and its third argument
+  * `Decodeaddress` and its fourth argument
+  * `Decoderelativeoffset` and its third argument
+ * Anonymous nested structures aren't supported, so you have to give a name to the unions in the following structure: `t_result`.
 
 3. Open the `python-bindings-swig` project and build the Python bindings.
-5. You're ready to go!
+4. You're ready to go!
 
+<a name="Installation"/>
 Installation
 ============
 
 1. `git clone https://github.com/0vercl0k/ollydbg2-python.git`
 2. Move all your `OllyDbg2` binaries in the `ollydbg2-python` directory. It should looks like this:
+
 ```
 D:\tmp\ollydbg2-python>ls -la .
 total 3572
@@ -88,7 +92,9 @@ drw-rw-rw-   2 0vercl0k 0       0 2013-09-22 16:17 plugins
 drw-rw-rw-  11 0vercl0k 0    4096 2013-09-22 16:13 samples
 drw-rw-rw-   2 0vercl0k 0    4096 2013-09-22 16:17 udds
 ```
+
 3. Build the python-loader project in Release mode and check you have a `python-loader.dll` file in `plugins/`:
+
 ```
 D:\tmp\ollydbg2-python>ls -la plugins
 total 24
@@ -96,7 +102,9 @@ drw-rw-rw-  2 0vercl0k 0     0 2013-09-22 16:22 .
 drw-rw-rw-  8 0vercl0k 0  4096 2013-09-22 16:17 ..
 -rw-rw-rw-  1 0vercl0k 0 18432 2013-09-22 16:22 python-loader.dll
 ```
+
 4. Build the python-buildings-swig project in Release mode, check you have a `_python_bindings_swig.pyd` file and a `python_bindings_swig.py` in `ollyapi/`:
+
 ```
 D:\tmp\ollydbg2-python>ls -la ollyapi
 total 1436
@@ -106,14 +114,17 @@ drw-rw-rw-  8 0vercl0k 0   4096 2013-09-22 16:17 ..
 -rw-rw-rw-  1 0vercl0k 0 971776 2013-09-22 14:09 _python_bindings_swig.pyd
 -rw-rw-rw-  1 0vercl0k 0 416207 2013-09-22 14:08 python_bindings_swig.py
 ```
+
 5. Now launch `ollydbg.exe`, and check the log window to see if the python-loader plugin has been successfully loaded.
 6. Script and have fun!
 
+<a name="KnownIssues"/>
 Known Issues
 ============
 
 If you encounter any issues please let me know by filling an issue here: [https://github.com/0vercl0k/ollydbg2-python/issues](https://github.com/0vercl0k/ollydbg2-python/issues). Also try to be explicit, and give me enough details to be able to repro the issue on my machine: OS version, OllyDbg2 configuration, script, etc.
 
+<a name="Contributing"/>
 Contributing
 ============
 
