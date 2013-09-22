@@ -66,3 +66,56 @@ To build the API bindings you will need [SWIG](http://www.swig.org/) and Python 
 
 3. Open the `python-bindings-swig` project and build the Python bindings.
 5. You're ready to go!
+
+Installation
+============
+
+1. `git clone https://github.com/0vercl0k/ollydbg2-python.git`
+2. Move all your `OllyDbg2` binaries in the `ollydbg2-python` directory. It should looks like this:
+```
+D:\tmp\ollydbg2-python>ls -la .
+total 3572
+drw-rw-rw-   8 0vercl0k 0    4096 2013-09-22 16:17 .
+drw-rw-rw-   5 0vercl0k 0    4096 2013-09-22 16:13 ..
+drw-rw-rw-   7 0vercl0k 0    4096 2013-09-22 16:13 .git
+-rw-rw-rw-   1 0vercl0k 0 1061944 2008-03-21 01:44 dbghelp.dll
+drw-rw-rw-   2 0vercl0k 0       0 2013-09-22 16:13 ollyapi
+-rwxrwxrwx   1 0vercl0k 0 2547200 2012-11-18 21:46 ollydbg.exe
+-rw-rw-rw-   1 0vercl0k 0   13705 2013-09-22 16:18 ollydbg.ini
+drw-rw-rw-   7 0vercl0k 0    4096 2013-09-22 16:13 ollydbg2-plugin-development-files
+drw-rw-rw-   2 0vercl0k 0       0 2013-09-22 16:17 plugins
+-rw-rw-rw-   1 0vercl0k 0    2713 2013-09-22 16:13 README.md
+drw-rw-rw-  11 0vercl0k 0    4096 2013-09-22 16:13 samples
+drw-rw-rw-   2 0vercl0k 0    4096 2013-09-22 16:17 udds
+```
+3. Build the python-loader project in Release mode and check you have a `python-loader.dll` file in `plugins/`:
+```
+D:\tmp\ollydbg2-python>ls -la plugins
+total 24
+drw-rw-rw-  2 0vercl0k 0     0 2013-09-22 16:22 .
+drw-rw-rw-  8 0vercl0k 0  4096 2013-09-22 16:17 ..
+-rw-rw-rw-  1 0vercl0k 0 18432 2013-09-22 16:22 python-loader.dll
+```
+4. Build the python-buildings-swig project in Release mode, check you have a `_python_bindings_swig.pyd` file and a `python_bindings_swig.py` in `ollyapi/`:
+```
+D:\tmp\ollydbg2-python>ls -la ollyapi
+total 1436
+drw-rw-rw-  2 0vercl0k 0   4096 2013-09-22 16:26 .
+drw-rw-rw-  8 0vercl0k 0   4096 2013-09-22 16:17 ..
+[...]
+-rw-rw-rw-  1 0vercl0k 0 971776 2013-09-22 14:09 _python_bindings_swig.pyd
+-rw-rw-rw-  1 0vercl0k 0 416207 2013-09-22 14:08 python_bindings_swig.py
+```
+5. Now launch `ollydbg.exe`, and check the log window to see if the python-loader plugin has been successfully loaded.
+6. Script and have fun!
+
+Known Issues
+============
+
+If you encounter any issues please let me know by filling an issue here: [https://github.com/0vercl0k/ollydbg2-python/issues](https://github.com/0vercl0k/ollydbg2-python/issues). Also try to be explicit, and give me enough details to be able to repro the issue on my machine: OS version, OllyDbg2 configuration, script, etc.
+
+Contributing
+============
+
+Feel free to contribute to this project: if you're used to play with Windows' GUI API please help me to make a working bar, if you have idea about cool samples to show case the API send me your ideas, if you want to implement some high level API methods please do!
+If you have also any comments, remarks I would love to hear them :).
