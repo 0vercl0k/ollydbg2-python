@@ -69,7 +69,19 @@ void spawn_window(void)
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
     if(GetOpenFileName(&ofn) == TRUE)
+    {
+        /*
+        CreateThread(
+            NULL,
+            0,
+            execute_python_script,
+            file_path,
+            0,
+            NULL
+        );
+        */
         execute_python_script(file_path);
+    }
 }
 
 int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode)
@@ -116,8 +128,9 @@ int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode)
         return MENU_ABSENT;
 }
 
-void execute_python_script(wchar_t *path)
+DWORD WINAPI execute_python_script(LPVOID param)
 {
+    wchar_t *path = (wchar_t*)param;
     Addtolist(0, WHITE, NAME_PLUGIN L" Trying to execute the script located here: '%s'..", path);
 
     std::wstring pathW(path);
@@ -127,10 +140,11 @@ void execute_python_script(wchar_t *path)
     if(PyFileObject == NULL)
     {
         Addtolist(0, RED, NAME_PLUGIN L" Your file doesn't exist.");
-        return;
+        return 0;
     }
 
     PyRun_SimpleFile(PyFile_AsFile(PyFileObject), (char*)pathA.c_str());
 
     Addtolist(0, WHITE, NAME_PLUGIN L" Execution is done!");
+    return 1;
 }

@@ -52,6 +52,13 @@ def GetEip():
     p_reg = Threadregisters(GetCpuThreadId())
     return p_reg.ip
 
+def GetEflags():
+    """
+    Get the EFLAGS register
+    """
+    p_reg = Threadregisters(GetCpuThreadId())
+    return p_reg.flags
+
 def GetProcessId():
     """
     Get the PID of the debuggee
@@ -100,6 +107,23 @@ def CreateRegisterGetter(reg_id, reg_name):
 
     return (f.__name__, f)
 
+def CreateSegRegisterGetter(seg_id, seg_name):
+    """
+    Create dynamically a getter function for x86 segment selectors contained in t_reg.s
+    """
+    def template_func():
+        r = Threadregisters(GetCpuThreadId())
+        s = ulongArray.frompointer(r.s)
+        return s[seg_id]
+
+    f = template_func
+    # adjust correctly the name of the futur function
+    f.__name__ = 'Get%s' % seg_name.capitalize()
+    f.__doc__  = 'Get the %s segment selector' % seg_name.upper()
+
+    return (f.__name__, f)
+
+
 def BuildSettersGetters():
     """
     Create dynamically all the getters/setters function used to retrieve/set register value in
@@ -116,6 +140,15 @@ def BuildSettersGetters():
         ('edi', REG_EDI)
     ]
 
+    list_seg = [
+        ('cs', SEG_CS),
+        ('ss', SEG_SS),
+        ('es', SEG_ES),
+        ('ds', SEG_DS),
+        ('gs', SEG_GS),
+        ('fs', SEG_FS)
+    ]
+
     for reg_name, reg_id in list_reg:
         # Build the setter
         n, f = CreateRegisterSetter(reg_id, reg_name)
@@ -123,6 +156,10 @@ def BuildSettersGetters():
 
         # Build the getter
         n, f = CreateRegisterGetter(reg_id, reg_name)
+        globals()[n] = f
+
+    for seg_name, seg_id in list_seg:
+        n, f = CreateSegRegisterGetter(seg_id, seg_name)
         globals()[n] = f
 
 # it's a bit magic, instanciation of the functions!

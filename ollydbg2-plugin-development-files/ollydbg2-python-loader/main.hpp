@@ -38,7 +38,7 @@ int handle_menu(t_table* pTable, wchar_t* pName, ulong index, int nMode);
     Execute a python script located on your file system thanks to
     the python high level API.
 */
-void execute_python_script(wchar_t *path);
+DWORD WINAPI execute_python_script(LPVOID param);
 
 
 // Global variables
