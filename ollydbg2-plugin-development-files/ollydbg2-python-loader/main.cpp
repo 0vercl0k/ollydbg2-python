@@ -76,7 +76,11 @@ void spawn_window(void)
     {
         /*
         XXX: Seems to not work when instrumenting OllyDBG2 ; 
-        ??? maybe it's because of DebugEvents not delivered in the new thread ???
+            I think the reason is:
+                When you call ollydbg!Run it calls kernelbase!ContinueDebugEvent
+                "Only the thread that created dwProcessId with the CreateProcess function can call ContinueDebugEvent."
+
+                So when, calling ollydbg!Run from another is wrong ; same thing for ollydbg!Checkfordebugevent.
         
         CreateThread(
             NULL,
