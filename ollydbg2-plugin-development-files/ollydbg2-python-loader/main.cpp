@@ -29,6 +29,7 @@ extc int __cdecl ODBG2_Pluginquery(int ollydbgversion, ulong *features, wchar_t 
 
     // Initialize the python environment, prepare the hooks
     Py_Initialize();
+    PyEval_InitThreads();
 
     Addtolist(0x31337, RED, NAME_PLUGIN L" Plugin fully initialized.");
 
@@ -54,8 +55,11 @@ extc t_menu * __cdecl ODBG2_Pluginmenu(wchar_t *type)
 
 void spawn_window(void)
 {
-    wchar_t file_path[1024] = {0};
+    wchar_t *file_path = (wchar_t*)malloc(sizeof(wchar_t) * 1024);
     OPENFILENAME ofn = {0};
+
+    if(file_path == NULL)
+        return;
 
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = hwollymain;
@@ -63,7 +67,7 @@ void spawn_window(void)
     // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
     // use the contents of szFile to initialize itself.
     ofn.lpstrFile[0] = '\0';
-    ofn.nMaxFile = sizeof(file_path);
+    ofn.nMaxFile = 1024 - 1;
     ofn.lpstrFilter = L"Python files\0*.py\0\0";
     ofn.nFilterIndex = 1;
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
@@ -71,6 +75,9 @@ void spawn_window(void)
     if(GetOpenFileName(&ofn) == TRUE)
     {
         /*
+        XXX: Seems to not work when instrumenting OllyDBG2 ; 
+        ??? maybe it's because of DebugEvents not delivered in the new thread ???
+        
         CreateThread(
             NULL,
             0,
@@ -140,11 +147,14 @@ DWORD WINAPI execute_python_script(LPVOID param)
     if(PyFileObject == NULL)
     {
         Addtolist(0, RED, NAME_PLUGIN L" Your file doesn't exist.");
-        return 0;
+        goto clean;
     }
 
     PyRun_SimpleFile(PyFile_AsFile(PyFileObject), (char*)pathA.c_str());
 
     Addtolist(0, WHITE, NAME_PLUGIN L" Execution is done!");
+
+clean:
+    free(path);
     return 1;
 }
