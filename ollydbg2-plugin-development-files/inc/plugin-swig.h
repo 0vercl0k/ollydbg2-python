@@ -3656,7 +3656,9 @@ stdapi (void)    Setrtcond(HWND hparent,int x,int y,int fi);
 stdapi (void)    Setrtprot(HWND hparent,int x,int y,int fi);
 stdapi (ulong)   Browsecodelocations(HWND hparent,wchar_t *title,
                    BROWSECODEFUNC *bccallback,void *data);
-stdapi (int)     Fillcombowithcodepages(HWND hw,int select);
+
+//XXX: This is not exported anymore by OllyDbg 2.01 (cf https://github.com/0vercl0k/ollydbg2-python/issues/6)
+//stdapi (int)     Fillcombowithcodepages(HWND hw,int select);
 
 
 ////////////////////////////////////////////////////////////////////////////////
