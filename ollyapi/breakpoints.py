@@ -295,5 +295,5 @@ class MemoryBreakpoint(Breakpoint):
 
     def remove(self):
         if self.state == 'Enabled':
-            RemoveMemoryBreakpoin(self.address)
+            RemoveMemoryBreakpoint(self.address)
             self.state = 'Disabled'
